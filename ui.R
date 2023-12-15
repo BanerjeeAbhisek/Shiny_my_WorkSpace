@@ -102,7 +102,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
   
-  data <<- example_data
+ # data <<- example_data
   
  
   
