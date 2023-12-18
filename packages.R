@@ -23,5 +23,7 @@ pacman::p_load(dplyr,
                crayon,
                knitr,
                kableExtra,
-               DT)#,
+               DT,
+               dplyr,
+               plotly)#,
 #               bslib)
