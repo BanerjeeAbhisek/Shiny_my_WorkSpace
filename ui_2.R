@@ -1,5 +1,8 @@
 source(here::here("packages.R"))
 
+# load data 
+load(here::here("example_data_shiny.RData"))
+
 data <- example_data
 
 data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", data$variablenname)
@@ -12,7 +15,7 @@ examp_1111 <- subset(example_data,
                        eingereichte_antwort == 'Antonym' & 
                        variablenname == 'satzAntonym')
 
-A = c("No Grouping Variables", "Grouping Variables")
+A = c("No Grouping Variables", "Grouping Variables") # What is this? Choice should be nothing, Versions or var_value
 
 B <- unique(as.array(unlist(examp_1111$var_value)))
 

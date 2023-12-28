@@ -1,0 +1,29 @@
+To do 
+
+- Data Table -> download of an Excel
+- h1, h2, h3 -> smaller font
+- Selection Input alphabetic order, a.o. Task Name
+	- also for the grouping varibales on the right  
+- Plot should also work if no grouping variable is selected (maybe histogram of the points for the stage)
+
+- optimze Plot 
+	- smaller Bars in red (wrong) and green (right) 
+	- other Theme, for exmaple minimal or bw
+	- Change Count to percent 
+	- Change 100 to right and <100 to wrong 
+	- increase x and y label/text
+	- centering header of group over the plot 
+
+- Choose on which Variable the Grouping should be made
+	- "Groping Variable" as header 
+	- The user should select between nothing, Versions or var_value
+
+- select of the different variables to include in the Grouping (checkboxGroupInput)
+	- the selection should be conditioned on task name, stage, version and grouping variable
+	- alpahbetic order  
+	- select everything as default 
+
+
+
+
+
