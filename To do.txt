@@ -13,6 +13,7 @@ To do
 	- Change 100 to right and <100 to wrong 
 	- increase x and y label/text
 	- centering header of group over the plot 
+	- plotly? 
 
 - Choose on which Variable the Grouping should be made
 	- "Groping Variable" as header 
