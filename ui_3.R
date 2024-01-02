@@ -223,7 +223,7 @@ server <- function(input, output, session) {
                              variablenname == input$variable)$var_value))
     })
     # Update choices for input 2
-    updateCheckboxGroupInput(session, "grouping_variable", choices =  choices_grouping_variable())
+    updateCheckboxGroupInput(session, "grouping_variable", choices =  choices_grouping_variable(), selected = choices_grouping_variable())
     
     
     
@@ -340,6 +340,7 @@ server <- function(input, output, session) {
   
   # Create Default table
   default_table = reactive({
+    pkt=example_data$punkte
     y=as.array(unlist(pkt))
     counts <- table(ifelse(y < 50, "< 50", ">= 50"))
     frac=counts / sum(counts) * 100
