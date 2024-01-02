@@ -9,7 +9,7 @@ data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", dat
 
 
 A = c("Nothing", "Var_values") # What is this? Choice should be nothing, Versions or var_value
- 
+
 
 
 
@@ -86,7 +86,7 @@ ui <- dashboardPage(
                  solidHeader = TRUE,
                  collapsible = TRUE,
                  width = 12,  # Set the width (out of 12 columns)
-                 height = 300, # Set the height in pixels
+                 height = "auto", # Set the height in pixels
                  offset = 500, 
                  DTOutput('table_output_1')  # Summary statistics will be rendered here
                  
@@ -101,7 +101,7 @@ ui <- dashboardPage(
                  solidHeader = TRUE,
                  collapsible = TRUE,
                  width = 12,  # Set the width (out of 12 columns)
-                 height = 300, # Set the height in pixels
+                 height = "auto", # Set the height in pixels
                  offset = 500, 
                  DTOutput('table_output')  # Summary statistics will be rendered here
                  
@@ -136,7 +136,7 @@ ui <- dashboardPage(
                  solidHeader = TRUE,
                  collapsible = TRUE,
                  width = 12,  # Set the width (out of 12 columns)
-                 height = 500, # Set the height in pixels
+                 height = "auto", # Set the height in pixels
                  offset = 500, 
                  # Dropdown menu with options from array B
                  checkboxGroupInput("grouping_variable", "Select Grouping Variable", choices = NULL),
@@ -340,7 +340,7 @@ server <- function(input, output, session) {
   
   # Create Default table
   default_table = reactive({
-    pkt=example_data$punkte
+    pkt =example_data$punkte
     y=as.array(unlist(pkt))
     counts <- table(ifelse(y < 50, "< 50", ">= 50"))
     frac=counts / sum(counts) * 100
