@@ -35,6 +35,22 @@ example_data %>%
 https://t-redactyl.io/blog/2016/01/creating-plots-in-r-using-ggplot2-part-4-stacked-bar-plots.html
 https://stackoverflow.com/questions/1330989/rotating-and-spacing-axis-labels-in-ggplot2
 
+red_line <- example_data %>%
+  dplyr::filter(exercise_name == '04 Semantik',
+                variablenname == 'satzAntonym', 
+                stage == 1,
+                feldname == 'dropdown1'
+  ) %>%
+  dplyr::mutate(right = dplyr::case_when(
+    punkte == 100 ~ 'right',
+    .default = 'false' 
+  )) %>%
+  dplyr::add_count(name = 'N') %>%
+  dplyr::group_by(right, N) %>%
+  dplyr::count(name = 'n_i') %>%
+  dplyr::mutate(percent = n_i/N*100) %>%
+  pull(percent) %>%
+  .[2]
 
 plotly_data <- example_data %>%
   dplyr::filter(exercise_name == '04 Semantik',
@@ -59,11 +75,15 @@ plotly_data %>%
           colors = c('right' = '#008000', 'false' = '#FF0000')) %>%
   add_bars() %>%
   layout(barmode = "stack",
+         shapes = list(list(type = "line",line = list(color = "black"),
+                            x0 = -0.5, x1 = 12.5,
+                            y0 = red_line, y1 = red_line)),
          title = "\n Verteilung der Antworten in Abhängigkeit der Variable",showlegend = FALSE,
          xaxis = list(title = ""),
          yaxis = list (title = "Prozent"))
 
 
 
-
+layout(shapes = list(hline(red_line), list(type = "rect",line = list(color = "black"),
+                                      x0 = 0.9, x1 = 2)), plot_bgcolor = "#e5ecf6")
 
