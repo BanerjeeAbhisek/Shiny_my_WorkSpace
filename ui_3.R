@@ -17,6 +17,8 @@ A = c("Nothing", "Var_values") # What is this? Choice should be nothing, Version
 
 ui <- dashboardPage(
   
+  
+  
   #Dashboard header
   dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
   
