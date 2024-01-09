@@ -15,7 +15,8 @@ c('stage', 'var_value')
 # var value
 example_data %>%
   dplyr::filter(exercise_name == '04 Semantik',
-                variablenname == 'satzAntonym') %>%
+                variablenname == 'satzAntonym'
+                feldname == 'dropdown1') %>%
   dplyr::select(var_value) %>%
   dplyr::distinct(var_value) %>%
   # unnest 

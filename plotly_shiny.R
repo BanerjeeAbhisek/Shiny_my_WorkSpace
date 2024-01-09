@@ -74,6 +74,7 @@ server <- function(input, output, session) {
       punkte == 100 ~ 'right',
       .default = 'false' 
     )) %>%
+      dplyr::mutate(right = factor(right, levels = c('right', 'false'))) %>%
     dplyr::group_by(var_value) %>%
     dplyr::add_count(name = 'N') %>%
     dplyr::group_by(var_value, right, N) %>%
