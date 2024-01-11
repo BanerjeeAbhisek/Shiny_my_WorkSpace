@@ -86,7 +86,7 @@ server <- function(input, output, session) {
   # Update choices for input 2 based on input 1
   observeEvent(input$task_name_overall, {
     # Perform your logic to generate choices based on input 1
-    choices_1 = reactive({as.character(unique(data[data$exercise_name == input$task_name_overall, 3]))}) 
+    choices_1 = reactive({as.character(sort(unique(data[data$exercise_name == input$task_name_overall, 3])))}) 
     
     # Update choices for input 2
     updateSelectizeInput(session, "stage_overall", choices = choices_1())
@@ -133,23 +133,22 @@ server <- function(input, output, session) {
   plotly_hist_data <- reactive({
     example_data %>%
       dplyr::filter(exercise_name == input$task_name_overall,
-                    stage == input$stage_overall
-      )
+                    stage == input$stage_overall) 
   })
   
   output$plot_overall <- renderPlotly({
     # a simple histogram of movie ratings
-    hist_data <- hist(plotly_hist_data()$punkte, breaks = seq(0, 100, by = 10), plot = FALSE)
+    hist_data <- hist(plotly_hist_data()$punkte, breaks = seq(0, 100, by = 1), plot = FALSE)
     
     #plotly_data %>%
-    #plot_ly(x = plotly_hist_data()$punkte, type = "bar")
+  #  plot_ly(x = plotly_hist_data()$punkte, type = "bar")
     # Create a bar plot using plot_ly
     plot_ly(x = hist_data$mids, y = hist_data$counts, type = "bar") %>%
       layout(
-        xaxis = list(title = "Punktes",
+        xaxis = list(title = "Punkte",
                      tickvals = seq(0, 100, by = 10),  # Set tick values
                      tickmode = "array"),  # Set tick mode to "array"),
-        yaxis = list(title = "Count")
+        yaxis = list(title = "Anzahl")
       )
     
     

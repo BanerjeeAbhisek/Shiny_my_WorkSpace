@@ -70,6 +70,8 @@ server <- function(input, output, session) {
                   feldname == 'dropdown1'
     ) %>%
     tidyr::unnest(var_value) %>%
+    dplyr::filter(var_value %in% inpu$checkbox)
+  
     dplyr::mutate(right = dplyr::case_when(
       punkte == 100 ~ 'right',
       .default = 'false' 

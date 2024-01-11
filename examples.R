@@ -15,7 +15,7 @@ c('stage', 'var_value')
 # var value
 example_data %>%
   dplyr::filter(exercise_name == '04 Semantik',
-                variablenname == 'satzAntonym'
+                variablenname == 'satzAntonym',
                 feldname == 'dropdown1') %>%
   dplyr::select(var_value) %>%
   dplyr::distinct(var_value) %>%
@@ -88,3 +88,13 @@ plotly_data %>%
 layout(shapes = list(hline(red_line), list(type = "rect",line = list(color = "black"),
                                       x0 = 0.9, x1 = 2)), plot_bgcolor = "#e5ecf6")
 
+
+
+# changing the dataset 
+# load data 
+load(here::here("example_data_shiny.RData"))
+
+example_data %<>%
+  dplyr::filter(!str_detect(variablenname, 'liste'))
+
+save(example_data, file = here::here("example_data_shiny.RData"))
