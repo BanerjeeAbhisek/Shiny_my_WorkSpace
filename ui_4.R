@@ -1,83 +1,99 @@
 source(here::here("packages.R"))
 
+
 # load data 
 load(here::here("example_data_shiny.RData"))
+
+example_data %<>%
+  dplyr::filter(!str_detect(variablenname, 'liste'))
+
+save(example_data, file = here::here("example_data_shiny.RData"))
+
 
 data <- example_data
 
 data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", data$variablenname)
 
 ui <- dashboardPage(
-  # Dashboard header
-  dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
-  
-  # Dashboard Sidebar
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Overall", tabName = "Overall"),
-      menuItem("Student's Input", tabName = "Sinput")
-    )
-  ), # end of dashboardSidebar
-  
-  dashboardBody( 
-    tabItems(
-      # TAB 1
-      tabItem(
-        tabName = "Overall",
-        dashboardControlbar(
-          # Dropdown menu for input 1
-          selectizeInput("task_name_overall", "Task Name", choices = unique(data$exercise_name)),
-          
-          # Dropdown menu for input 2
-          selectizeInput("stage_overall", "Stage", choices = NULL)
-        ), # end of dashboard controlbar
-        box(
-          title = "Histogram of Punkte",
-          status = "primary",
-          solidHeader = TRUE,
-          collapsible = TRUE,
-          width = 12,  # Set the width (out of 12 columns)
-          height = 200, # Set the height in pixels
-          #offset = 500, 
-          # Overall punkte plot
-          plotlyOutput("plot_overall") 
-          # Add more UI elements as needed
-        )#End of Box
-      ), # end of tab 1
-      
-      # TAB 2
-      tabItem(
-        tabName = "Sinput",
-        dashboardControlbar(
-          # Dropdown menu for input 1
-          selectizeInput("task_name_sinput", "Task Name", choices = unique(data$exercise_name)),
-          
-          # Dropdown menu for input 2
-          selectizeInput("stage_sinput", "Stage", choices = NULL),
-          
-          # Dropdown menu for input 3
-          selectizeInput("fieldname_sinput", "Field Name", choices = NULL),
-          
-          #Dropdown menu for input 4
-          checkboxGroupInput("grouping_variable_sinput", "Grouping Variable", choices = NULL)
-          
-        ), # end of dashboard controlbar
-        box(
-          title = "Barplots",
-          status = "primary",
-          solidHeader = TRUE,
-          collapsible = TRUE,
-          width = 12,  # Set the width (out of 12 columns)
-          height = 200, # Set the height in pixels
-          #offset = 500, 
-          # Overall punkte plot
-          plotlyOutput("plot_sinput") 
-          # Add more UI elements as needed
-        )#End of Box
-      ) # end of tab 2
-    ) # end of tabItems
-  ) # End of dashboard body
-) # End of dashboard page
+     # Dashboard header
+       dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
+     
+       # Dashboard Sidebar
+       dashboardSidebar(
+           sidebarMenu(
+               menuItem("Overall", tabName = "Overall"),
+               menuItem("Student's Input", tabName = "Sinput")
+             )
+         ), # end of dashboardSidebar
+     
+       dashboardBody( 
+           tabItems(
+               # TAB 1
+                 tabItem(
+                     tabName = "Overall",
+                     dashboardControlbar(
+                         width = 300,  # Adjust the width as needed
+                         # Dropdown menu for input 1
+                           selectizeInput("task_name_overall", "Task Name", choices = unique(data$exercise_name)),
+                         
+                           # Dropdown menu for input 2
+                           selectizeInput("stage_overall", "Stage", choices = NULL)
+                         
+                         ), # end of dashboard controlbar
+                     box(
+                         title = "Histogram of Punkte",
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         #offset = 500, 
+                           # Overall punkte plot
+                           plotlyOutput("plot_overall") 
+                         # Add more UI elements as needed
+                         )#End of Box
+                   ), # end of tab 1
+               
+                 # TAB 2
+                 tabItem(
+                     tabName = "Sinput",
+                     dashboardControlbar(
+                         width = 300,  # Adjust the width as needed
+                         # Dropdown menu for input 1
+                
+                  selectizeInput("task_name_sinput", "Task Name", choices = unique(data$exercise_name)),
+                         
+                           # Dropdown menu for input 2
+                           selectizeInput("stage_sinput", "Stage", choices = NULL),
+                         
+                          # Dropdown menu for input 3
+                           selectizeInput("fieldname_sinput", "Field Name", choices = NULL),
+                         
+                           # Dropdown menu for input 5
+                           selectizeInput("variable_sinput", "Variable", choices = NULL),
+                         
+                           #Dropdown menu for input 4
+                           checkboxGroupInput("grouping_variable_sinput", "Grouping Variable", choices = NULL)
+                         
+                           
+                           
+                         ), # end of dashboard controlbar
+                     box(
+                         title = "Barplots",
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         #offset = 500, 
+                           # Overall punkte plot
+                           plotlyOutput("plot_sinput") 
+                         # Add more UI elements as needed
+                         )#End of Box
+                   ) # end of tab 2
+             ) # end of tabItems
+         ) # End of dashboard body
+   ) # End of dashboard page
 
 server <- function(input, output, session) {
   
@@ -86,7 +102,7 @@ server <- function(input, output, session) {
   # Update choices for input 2 based on input 1
   observeEvent(input$task_name_overall, {
     # Perform your logic to generate choices based on input 1
-    choices_1 = reactive({as.character(sort(unique(data[data$exercise_name == input$task_name_overall, 3])))}) 
+    choices_1 = reactive({as.character(unique(data[data$exercise_name == input$task_name_overall, 3]))}) 
     
     # Update choices for input 2
     updateSelectizeInput(session, "stage_overall", choices = choices_1())
@@ -111,18 +127,32 @@ server <- function(input, output, session) {
   
   # Update choices for input 4 based on input 1 and input 2 and input 3
   observeEvent(c(input$task_name_sinput, input$stage_sinput, input$fieldname_sinput), {
+    choices_fourth_input <- reactive({ unique(data[data$exercise_name == input$task_name_sinput & as.character(data$stage)== input$stage_sinput & data$feldname== input$fieldname_sinput , 7])}) 
+    
+    # Update choices for input 2
+    updateSelectizeInput(session, "variable_sinput", choices = choices_fourth_input())
+  })
+  
+  
+  
+  # Update choices for input 4 based on input 1 and input 2 and input 3
+  observeEvent(c(input$task_name_sinput, input$stage_sinput, input$fieldname_sinput, input$variable_sinput), {
     choices_grouping_variable <- reactive({
       # Assuming data$variablenname is a vector
       
       unlist(unique(subset(example_data, 
                            exercise_name == input$task_name_sinput & 
                              stage ==  input$stage_sinput & 
-                             feldname == input$fieldname_sinput)$var_value))
+                             feldname == input$fieldname_sinput & 
+                             variablenname == input$variable_sinput)$var_value))
     })
     # Update choices for input 2
     updateCheckboxGroupInput(session, "grouping_variable_sinput", choices =  choices_grouping_variable(), selected = choices_grouping_variable())
     
   })
+  
+  
+  
   
   
   
@@ -166,9 +196,13 @@ server <- function(input, output, session) {
       dplyr::filter(exercise_name == input$task_name_sinput,
                     #variablenname == 'satzAntonym', 
                     stage == input$stage_sinput,
-                    feldname == input$fieldname_sinput
+                    feldname == input$fieldname_sinput,
+                    variablenname == input$variable_sinput
+                    
+                
       ) %>%
       tidyr::unnest(var_value) %>%
+      dplyr::filter(var_value %in% input$grouping_variable_sinput) %>%
       dplyr::mutate(right = dplyr::case_when(
         punkte == 100 ~ 'right',
         .default = 'false' 
@@ -188,7 +222,10 @@ server <- function(input, output, session) {
       dplyr::filter(exercise_name == input$task_name_sinput,
                     #variablenname == 'satzAntonym', 
                     stage == input$stage_sinput,
-                    feldname == input$fieldname_sinput
+                    feldname == input$fieldname_sinput,
+                    variablenname == input$variable_sinput,
+                    var_value %in% input$grouping_variable_sinput
+                    
       ) %>%
       dplyr::mutate(right = dplyr::case_when(
         punkte == 100 ~ 'right',
