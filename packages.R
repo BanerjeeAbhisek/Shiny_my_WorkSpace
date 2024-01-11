@@ -25,5 +25,7 @@ pacman::p_load(dplyr,
                kableExtra,
                DT,
                dplyr,
-               plotly)#,
+               plotly,
+               shinydashboardPlus,
+               shinyWidgets)#,
 #               bslib)
