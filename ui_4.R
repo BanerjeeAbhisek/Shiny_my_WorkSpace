@@ -15,85 +15,119 @@ data <- example_data
 data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", data$variablenname)
 
 ui <- dashboardPage(
-     # Dashboard header
-       dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
-     
-       # Dashboard Sidebar
-       dashboardSidebar(
-           sidebarMenu(
-               menuItem("Overall", tabName = "Overall"),
-               menuItem("Student's Input", tabName = "Sinput")
-             )
-         ), # end of dashboardSidebar
-     
-       dashboardBody( 
-           tabItems(
-               # TAB 1
-                 tabItem(
-                     tabName = "Overall",
-                     dashboardControlbar(
-                         width = 300,  # Adjust the width as needed
-                         # Dropdown menu for input 1
-                           selectizeInput("task_name_overall", "Task Name", choices = unique(data$exercise_name)),
-                         
-                           # Dropdown menu for input 2
-                           selectizeInput("stage_overall", "Stage", choices = NULL)
-                         
-                         ), # end of dashboard controlbar
-                     box(
-                         title = "Histogram of Punkte",
-                         status = "primary",
-                         solidHeader = TRUE,
-                         collapsible = TRUE,
-                         width = 12,  # Set the width (out of 12 columns)
-                         height = 200, # Set the height in pixels
-                         #offset = 500, 
-                           # Overall punkte plot
-                           plotlyOutput("plot_overall") 
-                         # Add more UI elements as needed
-                         )#End of Box
-                   ), # end of tab 1
-               
-                 # TAB 2
-                 tabItem(
-                     tabName = "Sinput",
-                     dashboardControlbar(
-                         width = 300,  # Adjust the width as needed
-                         # Dropdown menu for input 1
-                
-                  selectizeInput("task_name_sinput", "Task Name", choices = unique(data$exercise_name)),
-                         
-                           # Dropdown menu for input 2
-                           selectizeInput("stage_sinput", "Stage", choices = NULL),
-                         
-                          # Dropdown menu for input 3
-                           selectizeInput("fieldname_sinput", "Field Name", choices = NULL),
-                         
-                           # Dropdown menu for input 5
-                           selectizeInput("variable_sinput", "Variable", choices = NULL),
-                         
-                           #Dropdown menu for input 4
-                           checkboxGroupInput("grouping_variable_sinput", "Grouping Variable", choices = NULL)
-                         
-                           
-                           
-                         ), # end of dashboard controlbar
-                     box(
-                         title = "Barplots",
-                         status = "primary",
-                         solidHeader = TRUE,
-                         collapsible = TRUE,
-                         width = 12,  # Set the width (out of 12 columns)
-                         height = 200, # Set the height in pixels
-                         #offset = 500, 
-                           # Overall punkte plot
-                           plotlyOutput("plot_sinput") 
-                         # Add more UI elements as needed
-                         )#End of Box
-                   ) # end of tab 2
-             ) # end of tabItems
-         ) # End of dashboard body
-   ) # End of dashboard page
+  # Dashboard header
+  dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
+  
+  # Dashboard Sidebar
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Overall", tabName = "Overall"),
+      menuItem("Student's Input", tabName = "Sinput")
+    )
+  ), # end of dashboardSidebar
+  
+  dashboardBody( 
+    tabItems(
+      # TAB 1
+      tabItem(
+        tabName = "Overall",
+        dashboardControlbar(
+          width = 250,  # Adjust the width as needed
+          # Dropdown menu for input 1
+          selectizeInput("task_name_overall", "Task Name", choices = unique(data$exercise_name)),
+          
+          # Dropdown menu for input 2
+          selectizeInput("stage_overall", "Stage", choices = NULL)
+          
+        ), # end of dashboard controlbar
+        fluidRow(
+          
+          column(width = 10,
+                 box(
+                   title = "Histogram of Punkte",
+                   status = "primary",
+                   solidHeader = TRUE,
+                   collapsible = TRUE,
+                   width = 12,  # Set the width (out of 12 columns)
+                   height = 200, # Set the height in pixels
+                   #offset = 500, 
+                   # Overall punkte plot
+                   plotlyOutput("plot_overall") 
+                   # Add more UI elements as needed
+                 ),#End of Box
+                 box(
+                   title = "Data Table of Punkte",
+                   status = "primary",
+                   solidHeader = TRUE,
+                   collapsible = TRUE,
+                   width = 12,  # Set the width (out of 12 columns)
+                   height = 200, # Set the height in pixels
+                   #offset = 500, 
+                   # Overall punkte plot
+                   DTOutput('table_output_overall')
+                   # Add more UI elements as needed
+                 )#End of Box
+          )#End of column
+        ) #End of fluidRow
+      ), # end of tab 1
+      
+      # TAB 2
+      tabItem(
+        tabName = "Sinput",
+        dashboardControlbar(
+          width = 250,  # Adjust the width as needed
+          # Dropdown menu for input 1
+          
+          selectizeInput("task_name_sinput", "Task Name", choices = unique(data$exercise_name)),
+          
+          # Dropdown menu for input 2
+          selectizeInput("stage_sinput", "Stage", choices = NULL),
+          
+          # Dropdown menu for input 3
+          selectizeInput("fieldname_sinput", "Field Name", choices = NULL),
+          
+          # Dropdown menu for input 5
+          selectizeInput("variable_sinput", "Variable", choices = NULL),
+          
+          #Dropdown menu for input 4
+          checkboxGroupInput("grouping_variable_sinput", "Grouping Variable", choices = NULL)
+          
+          
+          
+        ), # end of dashboard controlbar
+        fluidRow(
+          
+          column(width = 10,
+                 box(
+                   title = "Barplots",
+                   status = "primary",
+                   solidHeader = TRUE,
+                   collapsible = TRUE,
+                   width = 12,  # Set the width (out of 12 columns)
+                   height = 200, # Set the height in pixels
+                   #offset = 500, 
+                   # Overall punkte plot
+                   plotlyOutput("plot_sinput") 
+                   # Add more UI elements as needed
+                 ),#End of Box
+                 box(
+                   title = "Data Table of Punkte",
+                   status = "primary",
+                   solidHeader = TRUE,
+                   collapsible = TRUE,
+                   width = 12,  # Set the width (out of 12 columns)
+                   height = 200, # Set the height in pixels
+                   #offset = 500, 
+                   # Overall punkte plot
+                   DTOutput('table_output_sinput') 
+                   # Add more UI elements as needed
+                 )# End of Box
+          )#End of column
+        )#End of fluidRow
+      ) # end of tab 2
+    ) # end of tabItems
+  ) # End of dashboard body
+) # End of dashboard page
 
 server <- function(input, output, session) {
   
@@ -171,7 +205,7 @@ server <- function(input, output, session) {
     hist_data <- hist(plotly_hist_data()$punkte, breaks = seq(0, 100, by = 1), plot = FALSE)
     
     #plotly_data %>%
-  #  plot_ly(x = plotly_hist_data()$punkte, type = "bar")
+    #  plot_ly(x = plotly_hist_data()$punkte, type = "bar")
     # Create a bar plot using plot_ly
     plot_ly(x = hist_data$mids, y = hist_data$counts, type = "bar") %>%
       layout(
@@ -199,7 +233,7 @@ server <- function(input, output, session) {
                     feldname == input$fieldname_sinput,
                     variablenname == input$variable_sinput
                     
-                
+                    
       ) %>%
       tidyr::unnest(var_value) %>%
       dplyr::filter(var_value %in% input$grouping_variable_sinput) %>%
@@ -266,7 +300,53 @@ server <- function(input, output, session) {
   })
   
   
+  
+  
+  
+  # Create Default table
+  default_table_overall = reactive({
+    
+    hist_data <- hist(plotly_hist_data()$punkte, breaks = seq(0, 100, by = 1), plot = FALSE)
+    x = hist_data$mids
+    y = hist_data$counts
+    result_df=data.frame("Punkte" = x, "Anzahl" = y)
+    result_df[result_df$Anzahl > 0, ]
+    
+    
+    
+  })
+  
+  output$table_output_overall <- renderDT({
+    req(default_table_overall())
+  }, options = list(pageLength = 5))
+  
+  
+  
+  # Create case-Wise table
+  default_table_sinput = reactive({
+    
+    x = plotly_bar_data()$var_value
+    y = plotly_bar_data()$percent  
+    z = 100-y
+    data.frame("x"=x,"True"=paste(round(y,2), "%", sep = ""),"False"=paste(round(z,2), "%", sep = ""))
+    
+    
+    
+    
+  })
+  
+  output$table_output_sinput <- renderDT({
+    req(default_table_sinput())
+  }, options = list(pageLength = 5))
+  
+  
+  
+  
+  
+  
+  
 } 
 
 # Run the application
 shinyApp(ui, server)
+
