@@ -165,10 +165,10 @@ server <- function(input, output, session) {
   
   # Update choices for input 4 based on input 1 and input 2 and input 3
   observeEvent(c(input$task_name_sinput, input$stage_sinput, input$fieldname_sinput), {
-    choices_fourth_input <- reactive({ unique(data[data$exercise_name == input$task_name_sinput & as.character(data$stage)== input$stage_sinput & data$feldname== input$fieldname_sinput , 7])}) 
+    choices_fourth_input <- reactive({ unique(data[data$exercise_name == input$task_name_sinput & as.character(data$stage)== input$stage_sinput & data$feldname== input$fieldname_sinput , 7])  %>% unlist() %>% as.character() %>% sort()}) 
     
     # Update choices for input 2
-    updateSelectizeInput(session, "variable_sinput", choices = choices_fourth_input())
+    updateSelectizeInput(session, "variable_sinput", choices = choices_fourth_input() )
   })
   
   
@@ -178,11 +178,11 @@ server <- function(input, output, session) {
     choices_grouping_variable <- reactive({
       # Assuming data$variablenname is a vector
       
-      unlist(unique(subset(example_data, 
+      unique(subset(example_data, 
                            exercise_name == input$task_name_sinput & 
                              stage ==  input$stage_sinput & 
                              feldname == input$fieldname_sinput & 
-                             variablenname == input$variable_sinput)$var_value))
+                             variablenname == input$variable_sinput)$var_value)  %>% unlist() %>% as.character() %>% sort()
     })
     # Update choices for input 2
     updateCheckboxGroupInput(session, "grouping_variable_sinput", choices =  choices_grouping_variable(), selected = choices_grouping_variable())
@@ -349,15 +349,20 @@ server <- function(input, output, session) {
   # Create case-Wise table
   default_table_sinput = reactive({
     
-    x = plotly_bar_data()$var_value
-    y = plotly_bar_data()$percent  
+    #x = plotly_bar_data()$var_value
+    #y = plotly_bar_data()$percent  
+    #z = 100-y
+    #df1=data.frame("x"=x,"True"=paste(round(y,2), "%", sep = ""),"False"=paste(round(z,2), "%", sep = ""))
+    #df2=df1[seq(2, nrow(df1), by = 2), ]
+    #rownames(df2)=NULL
+    #df2
+    
+    exd_right <- plotly_bar_data()%>%
+      dplyr::filter(right == "right")
+    x= exd_right$var_value
+    y=exd_right$percent
     z = 100-y
-    df1=data.frame("x"=x,"True"=paste(round(y,2), "%", sep = ""),"False"=paste(round(z,2), "%", sep = ""))
-    df2=df1[seq(2, nrow(df1), by = 2), ]
-    rownames(df2)=NULL
-    df2
-    
-    
+    data.frame("Grouping Variable"=x,"True"=paste(round(y,2), "%", sep = ""),"False"=paste(round(z,2), "%", sep = ""))
   })
   
   output$table_output_sinput <- renderDT({
@@ -371,7 +376,8 @@ server <- function(input, output, session) {
     #autoWidth = TRUE,
     ordering = TRUE,
     dom = 'tB',
-    buttons = c('copy', 'csv', 'excel')
+    buttons = c('copy', 'csv', 'excel'),
+    pageLength = 20
   ),
   
   class = "display"
@@ -389,4 +395,58 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui, server)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
