@@ -185,12 +185,6 @@ server <- function(input, output, session) {
   
   
   
-  
-  
-  
-  
-  
-  
   # Create the plotly Histogram from the OVERALL tab..
   plotly_hist_data <- reactive({
     example_data %>%
