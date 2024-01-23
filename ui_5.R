@@ -4,13 +4,7 @@ source(here::here("packages.R"))
 # load data 
 load(here::here("example_data_shiny.RData"))
 
-example_data %<>%
-  dplyr::filter(!str_detect(variablenname, 'liste'))
-
-save(example_data, file = here::here("example_data_shiny.RData"))
-
-
-data <- example_data
+data <- example_data # later change 
 
 data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", data$variablenname)
 

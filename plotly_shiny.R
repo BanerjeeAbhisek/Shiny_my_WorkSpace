@@ -7,7 +7,7 @@ data <- example_data
 
 # data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", data$variablenname)
 
-A = c("Nothing", "Var_values") # What is this? Choice should be nothing, Versions or var_value
+A = c("Nothing", "Var_values") 
 
 minx <- min(example_data$punkte)
 maxx <- max(example_data$punkte)
