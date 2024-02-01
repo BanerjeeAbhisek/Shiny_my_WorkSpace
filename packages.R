@@ -27,5 +27,7 @@ pacman::p_load(dplyr,
                dplyr,
                plotly,
                shinydashboardPlus,
-               shinyWidgets)#,
+               shinyWidgets,
+               gt,
+               grDevices)#,
 #               bslib)
