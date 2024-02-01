@@ -40,7 +40,7 @@ ui <- dashboardPage(
           
           column(width = 10,
                  box(
-                   title = "Histogram of Punkte",
+                   title = uiOutput("plot_overall_title"),
                    status = "primary",
                    solidHeader = TRUE,
                    collapsible = TRUE,
@@ -52,7 +52,7 @@ ui <- dashboardPage(
                    # Add more UI elements as needed
                  ),#End of Box
                  box(
-                   title = "Data Table of Punkte",
+                   title = uiOutput("table_overall_title"),
                    status = "primary",
                    solidHeader = TRUE,
                    collapsible = TRUE,
@@ -405,6 +405,17 @@ server <- function(input, output, session) {
   }, class = "display")
   
   #, options = list(pageLength = 5))
+  
+  
+  output$plot_overall_title <- renderUI({
+    title_text <- paste("Task Name:", input$task_name_sinput, " - Stage: ", input$stage_sinput)  # You can replace this with your dynamic text
+    h4(title_text)  # You can adjust the HTML tag and class as needed
+  })
+  
+  output$table_overall_title <- renderUI({
+    title_text <- paste("Task Name:", input$task_name_sinput, " - Stage: ", input$stage_sinput)  # You can replace this with your dynamic text
+    h4(title_text)  # You can adjust the HTML tag and class as needed
+  })
   
   output$plot_sinput_title <- renderUI({
     title_text <- paste("Task Name:", input$task_name_sinput, " - Stage: ", input$stage_sinput)  # You can replace this with your dynamic text
