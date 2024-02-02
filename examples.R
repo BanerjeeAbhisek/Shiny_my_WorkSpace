@@ -98,3 +98,7 @@ example_data %<>%
   dplyr::filter(!str_detect(variablenname, 'liste'))
 
 save(example_data, file = here::here("example_data_shiny.RData"))
+
+
+example_data %>%
+  dplyr::filter(punkte == 0)

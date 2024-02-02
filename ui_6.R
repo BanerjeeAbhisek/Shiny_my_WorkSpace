@@ -248,11 +248,10 @@ server <- function(input, output, session) {
                     stage == input$stage_sinput,
                     feldname == input$fieldname_sinput,
                     variablenname == input$variable_sinput
-                    
-                    
       ) %>%
       tidyr::unnest(var_value) %>%
       dplyr::filter(var_value %in% input$grouping_variable_sinput) %>%
+      # has to be changed in the final version (probably)
       dplyr::mutate(right = dplyr::case_when(
         punkte == 100 ~ 'right',
         .default = 'false' 
@@ -364,8 +363,8 @@ server <- function(input, output, session) {
     list(paging = FALSE,
          dom = 'Bfrtip',
          buttons = list( 
-           list(extend = 'csv',   filename =  paste("Punkte"), title = "Punkte"),
-           list(extend = 'excel', filename =   paste("Punkte"),title = "Punkte"),
+           list(extend = 'csv',   filename =  paste(input$task_name_sinput, " - Stage:", input$stage_sinput), title = "Punkte"),
+           list(extend = 'excel', filename =  paste(input$task_name_sinput, " - Stage:", input$stage_sinput), title = "Punkte"),
            list(extend = 'copy')))
   ),# end of options   # end of list
   #   )# end of buttons
@@ -397,8 +396,8 @@ server <- function(input, output, session) {
       paging = FALSE,
       dom = 'Bfrtip',
       buttons = list( 
-        list(extend = 'csv', filename = paste(input$task_name_sinput, " - Stage: ", input$stage_sinput), title = paste(input$task_name_sinput, " - Stage: ", input$stage_sinput)),
-        list(extend = 'excel', filename = paste(input$task_name_sinput, " - Stage: ", input$stage_sinput), title = paste(input$task_name_sinput, " - Stage: ", input$stage_sinput)),
+        list(extend = 'csv', filename = paste(input$task_name_sinput, " - Stage:", input$stage_sinput, 'grouping'), title = paste(input$task_name_sinput, " - Stage: ", input$stage_sinput)),
+        list(extend = 'excel', filename = paste(input$task_name_sinput, " - Stage:", input$stage_sinput, 'grouping'), title = paste(input$task_name_sinput, " - Stage: ", input$stage_sinput)),
         list(extend = 'copy')
       )
     ))
