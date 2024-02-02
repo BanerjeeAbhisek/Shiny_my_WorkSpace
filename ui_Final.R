@@ -157,7 +157,7 @@ server <- function(input, output, session) {
     
     choices_1 = reactive({as.character(unique(data[data$exercise_name == input$task_name_overall, 3]))}) 
     
-   
+    
     updateSelectizeInput(session, "stage_overall", choices = choices_1())
   })
   
@@ -304,7 +304,7 @@ server <- function(input, output, session) {
   # create the stacked bar plots or STUDENT's INPUT section
   output$plot_sinput <- renderPlotly({
     
-   
+    
     # Adjust length and implemend line brakes for X-axis labels
     new_x <- sapply(plotly_bar_data()$var_value, 
                     FUN = function(x) {
@@ -319,7 +319,7 @@ server <- function(input, output, session) {
     new_x_1=sapply(new_x, FUN = function(x) {paste(strwrap(x, width = 25), collapse = "<br>")})
     
     
-
+    
     # The plot_ly function
     plot_ly(x = new_x_1, y = plotly_bar_data()$percent,  
             color = plotly_bar_data()$right,
@@ -343,7 +343,7 @@ server <- function(input, output, session) {
   
   # Create the data table for the OVERALL section
   default_table_overall = reactive({
-
+    
     xx=data.frame(table(plotly_hist_data()$punkte))
     x = xx$Var1
     y = xx$Freq
@@ -368,12 +368,12 @@ server <- function(input, output, session) {
            list(extend = 'excel', filename = paste_fun(input$task_name_sinput,input$stage_sinput), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
            list(extend = 'copy')))
   ),# end of options  
-
+  
   
   class = "display"
   )
   
- 
+  
   
   
   
@@ -407,7 +407,7 @@ server <- function(input, output, session) {
       )
     ))
   }, class = "display")
- 
+  
   
   
   # Create heading for histogram for OVERALL section
@@ -434,7 +434,7 @@ server <- function(input, output, session) {
     h4(title_text)  # You can adjust the HTML tag and class as needed
   })
   
- 
+  
   
   
 } # End of server 
