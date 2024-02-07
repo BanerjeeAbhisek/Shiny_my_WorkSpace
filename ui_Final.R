@@ -1,14 +1,6 @@
 # Sources the packages used
 source(here::here("packages.R"))
 
-
-
-
-
-
-
-
-
 # load and modify the data
 load(here::here("example_data_shiny.RData"))
 
@@ -16,30 +8,21 @@ data <- example_data # later change
 
 data$variablenname <- ifelse(is.na(data$variablenname), "No variable found", data$variablenname)
 
-
-
-
-
-
-
-
-
 # Make a common function for the paste
-paste_fun = function(task, stage){ return(paste("Task Name:", task, " - Stage: ", stage)) }
-
+paste_fun = function(task, stage){ return(paste(task, " - Stage ", stage)) }
 
 
 # Make the ui function
 ui <- dashboardPage(
   
   # Dashboard header
-  dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
+  dashboardHeader(title = "Analyseboard", titleWidth = 230),
   
   # Dashboard Sidebar
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Overall", tabName = "Overall"),
-      menuItem("Student's Input", tabName = "Sinput")
+      menuItem("Stages", tabName = "Overall"),
+      menuItem("Teilaufgaben", tabName = "Sinput")
     )
   ), # end of dashboardSidebar
   
@@ -53,7 +36,7 @@ ui <- dashboardPage(
         dashboardControlbar(
           width = 250,  # Adjust the width as needed
           # Dropdown menu for Task Name
-          selectizeInput("task_name_overall", "Task Name", choices = sort(unique(data$exercise_name))),
+          selectizeInput("task_name_overall", "Aufgabe", choices = sort(unique(data$exercise_name))),
           
           # Dropdown menu for Stage
           selectizeInput("stage_overall", "Stage", choices = NULL)
@@ -85,26 +68,26 @@ ui <- dashboardPage(
         ) #End of fluidRow
       ), # end of tab 1
       
-      # TAB 2
+      ##### TAB 2 ####
       tabItem(
         tabName = "Sinput",
         dashboardControlbar(
           width = 250,  # Adjust the width as needed
           # Dropdown menu for Rask Name
           
-          selectizeInput("task_name_sinput", "Task Name", choices = NULL), #sort(unique(data$exercise_name))),
+          selectizeInput("task_name_sinput", "Aufgabe", choices = NULL), #sort(unique(data$exercise_name))),
           
           # Dropdown menu for Stage
           selectizeInput("stage_sinput", "Stage", choices = NULL),
           
           # Dropdown menu for Field Name
-          selectizeInput("fieldname_sinput", "Field Name", choices = NULL),
+          selectizeInput("fieldname_sinput", "Einreichungsfeld", choices = NULL),
           
           # Dropdown menu for variable
           selectizeInput("variable_sinput", "Variable", choices = NULL),
           
           #Checkbox menu for grouping Variable
-          checkboxGroupInput("grouping_variable_sinput", "Grouping Variable", choices = NULL)
+          checkboxGroupInput("grouping_variable_sinput", 'Variablenwerte', choices = NULL)
           
           
           
@@ -136,16 +119,6 @@ ui <- dashboardPage(
     ) # end of tabItems
   ) # End of dashboard body
 ) # End of dashboard page
-
-
-
-
-
-
-
-
-
-
 
 # Server Function
 server <- function(input, output, session) {
@@ -238,7 +211,7 @@ server <- function(input, output, session) {
     
     plot_ly(x = xx$Var1, y = xx$Freq, type = "bar",text = ~paste("Punkte :", xx$Var1,
                                                                  "<br> Anzahl :", xx$Freq,
-                                                                 "<br> Proportion :", xx$proportion),
+                                                                 "<br> Anteil :", xx$proportion),
             textposition = "none",
             hoverinfo = "text" ) %>%
       layout(
@@ -252,12 +225,7 @@ server <- function(input, output, session) {
     
   })
   
-  
-  
-  
-  
-  
-  
+
   # Create data for the stacked bar plots or STUDENT's INPUT section
   plotly_bar_data <- reactive({
     example_data %>%
@@ -283,8 +251,7 @@ server <- function(input, output, session) {
       dplyr::mutate(percent = n_i/N*100)
   })
   
-  
-  
+
   # Create Red line which measures the average number of True for all the selected grouping variables
   red_line_1 = reactive({
     
@@ -295,16 +262,8 @@ server <- function(input, output, session) {
   })
   
   
-  
-  
-  
-  
-  
-  
   # create the stacked bar plots or STUDENT's INPUT section
   output$plot_sinput <- renderPlotly({
-    
-    
     # Adjust length and implemend line brakes for X-axis labels
     new_x <- sapply(plotly_bar_data()$var_value, 
                     FUN = function(x) {
@@ -317,7 +276,6 @@ server <- function(input, output, session) {
                       }
                     })
     new_x_1=sapply(new_x, FUN = function(x) {paste(strwrap(x, width = 25), collapse = "<br>")})
-    
     
     
     # The plot_ly function
@@ -336,11 +294,7 @@ server <- function(input, output, session) {
     
     
   })
-  
-  
-  
-  
-  
+
   # Create the data table for the OVERALL section
   default_table_overall = reactive({
     
@@ -349,12 +303,11 @@ server <- function(input, output, session) {
     y = xx$Freq
     summ= sum(y)
     z = round(y/summ,2)
-    result_df=data.frame("Punkte" = x, "Anzahl" = y, "Proportion" = z)
+    result_df=data.frame("Punkte" = x, "Anzahl" = y, "Anteil" = z)
     
   })
   
-  
-  
+
   # Present the table for the OVERALL section
   output$table_output_overall <- renderDT({
     req(default_table_overall())
@@ -372,12 +325,7 @@ server <- function(input, output, session) {
   
   class = "display"
   )
-  
-  
-  
-  
-  
-  
+
   
   # Create the data table for the STUDENT'S INPUT section
   default_table_sinput = reactive({
@@ -401,8 +349,8 @@ server <- function(input, output, session) {
       paging = FALSE,
       dom = 'Bfrtip',
       buttons = list( 
-        list(extend = 'csv', filename = paste(input$task_name_sinput, " - Stage:", input$stage_sinput, 'grouping'), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
-        list(extend = 'excel', filename = paste(input$task_name_sinput, " - Stage:", input$stage_sinput, 'grouping'), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
+        list(extend = 'csv', filename = paste(input$task_name_sinput, " - Stage", input$stage_sinput, 'grouping'), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
+        list(extend = 'excel', filename = paste(input$task_name_sinput, " - Stage", input$stage_sinput, 'grouping'), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
         list(extend = 'copy')
       )
     ))
