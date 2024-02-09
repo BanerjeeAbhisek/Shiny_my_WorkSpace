@@ -492,6 +492,20 @@ shinyApp(ui, server)
 
 
 
+# Function to hash password using bcrypt
+hash_password <- function(password) {
+  hashed_password <- bcrypt::hashpw(password, salt = bcrypt::gensalt())
+  return(hashed_password)
+}
+
+
+# Define your secret key
+key <- 123
+
+# Encrypt passwords in the user_base tibble
+user_base <- user_base %>%
+  mutate(encrypted_password = sapply(password, hash_password),
+         password = NULL)  # Remove the plain text password column
 
 
 
