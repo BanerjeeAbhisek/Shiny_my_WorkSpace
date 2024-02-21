@@ -39,7 +39,7 @@ paste_fun = function(task, stage){ return(paste("Task Name:", task, " - Stage: "
 # Make the ui function
 ui <- fluidPage(
   # logout button
-  div(class = "pull-right", shinyauthr::logoutUI(id = "logout")),
+  #div(class = "pull-right", shinyauthr::logoutUI(id = "logout")),
   
   includeCSS("format.css"),
   # login section
