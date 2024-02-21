@@ -38,15 +38,17 @@ paste_fun = function(task, stage){ return(paste("Task Name:", task, " - Stage: "
 
 # Make the ui function
 ui <- fluidPage(
-  # logout button
-  div(class = "pull-right", shinyauthr::logoutUI(id = "logout")),
+  
   
   includeCSS("format.css"),
   # login section
   shinyauthr::loginUI(id = "login"),
   
   # Sidebar to show user info after login
-  uiOutput("dashboard_ui")
+  uiOutput("dashboard_ui"),
+  
+  # logout button
+  div(class = "pull-top",style="background-color: #004c93;", shinyauthr::logoutUI(id = "logout"))
   
   
 )#end of fluidpage
@@ -181,7 +183,6 @@ server <- function(input, output, session) {
             )#End of fluidRow
           ) # end of tab 2
         ) # end of tabItems
-       
       ) # End of dashboard body
     ) # End of dashboard page
     

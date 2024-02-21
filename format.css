@@ -121,3 +121,9 @@ table.dataTable.row-border > tbody > tr > th, table.dataTable.row-border > tbody
     border-top: 1px solid rgba(0, 0, 0, 0.15);
     text-align: right;
 }
+
+
+.pull-top {
+    background-color: #004c93;
+    padding-left: 8px;
+}
