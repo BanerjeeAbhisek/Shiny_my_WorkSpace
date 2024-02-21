@@ -38,17 +38,22 @@ paste_fun = function(task, stage){ return(paste("Task Name:", task, " - Stage: "
 
 # Make the ui function
 ui <- fluidPage(
-  
-  
+
   includeCSS("format.css"),
+  
+  
+  # logout button
+  div(class = "pull-top", 
+      p(class = 'own_h' ,'Titel'), 
+      p(shinyauthr::logoutUI(id = "logout"))
+      ),
+  
   # login section
   shinyauthr::loginUI(id = "login"),
   
   # Sidebar to show user info after login
-  uiOutput("dashboard_ui"),
-  
-  # logout button
-  div(class = "pull-top", shinyauthr::logoutUI(id = "logout"))
+  uiOutput("dashboard_ui")
+
   
   
 )#end of fluidpage
