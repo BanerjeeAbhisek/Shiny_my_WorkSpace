@@ -3,12 +3,6 @@ source(here::here("packages.R"))
 
 
 
-
-
-
-
-
-
 # load and modify the data
 load(here::here("example_data_shiny.RData"))
 load(here::here("results_points_per_stage.RData"))
@@ -34,7 +28,7 @@ user_base <- tibble::tibble(
 
 
 # Make a common function for the paste
-paste_fun = function(task, stage){ return(paste("Task Name:", task, " - Stage: ", stage)) }
+paste_fun = function(task, stage){ return(paste("Aufgabe:", task, " - Stage: ", stage)) }
 
 
 
@@ -46,12 +40,17 @@ ui <- fluidPage(
   
   # logout button
   div(class = "pull-top", 
-      p(class = 'own_h' ,'Titel'), 
-      p(shinyauthr::logoutUI(id = "logout"))
+      p(class = 'own_h' ,'Analyseboard für Deutsch als Zweit- und Fremdsprache'), 
+      p(shinyauthr::logoutUI(id = "logout",
+                             label = 'Abmelden'))
   ),
   
   # login section
-  shinyauthr::loginUI(id = "login"),
+  shinyauthr::loginUI(id = "login", 
+                      title = 'Anmelden',
+                      user_title = 'Benutzername',
+                      pass_title = 'Passwort', 
+                      login_title = 'Anmelden'),
   
   # Sidebar to show user info after login
   uiOutput("dashboard_ui"),
@@ -104,14 +103,15 @@ server <- function(input, output, session) {
     
     
     dashboardPage(
+      title = 'Analyseboard für Deutsch als Zweit- und Fremdsprache',
       
       # Dashboard header
-      dashboardHeader(title = "Shiny Dashboard", titleWidth = 230),
+      dashboardHeader( titleWidth = 230),
       # Dashboard Sidebar
       dashboardSidebar(
         sidebarMenu(
-          menuItem("Overall", tabName = "Overall"),
-          menuItem("Student's Input", tabName = "Sinput")
+          menuItem("Stages", tabName = "Overall"),
+          menuItem("Eingabefelder", tabName = "Sinput")
         )
       ), # end of dashboardSidebar
       # dashboard Body
@@ -124,7 +124,7 @@ server <- function(input, output, session) {
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
               # Dropdown menu for Task Name
-              selectizeInput("task_name_overall", "Task Name", choices = sort(unique(data_overall$exercise_name))),
+              selectizeInput("task_name_overall", "Aufgabe", choices = sort(unique(data_overall$exercise_name))),
               # Dropdown menu for Stage
               selectizeInput("stage_overall", "Stage", choices = NULL)
             ), # end of dashboard controlbar
@@ -158,15 +158,15 @@ server <- function(input, output, session) {
               width = 250,  # Adjust the width as needed
               # Dropdown menu for Rask Name
               #selectizeInput("task_name_sinput", "Task Name", choices = NULL), #sort(unique(data$exercise_name))),
-              selectizeInput("task_name_sinput", "Task Name", choices = sort(unique(data$exercise_name))),
+              selectizeInput("task_name_sinput", "Aufgabe", choices = sort(unique(data$exercise_name))),
               # Dropdown menu for Stage
               selectizeInput("stage_sinput", "Stage", choices = NULL),
               # Dropdown menu for Field Name
-              selectizeInput("fieldname_sinput", "Field Name", choices = NULL),
+              selectizeInput("fieldname_sinput", "Inputfeld", choices = NULL),
               # Dropdown menu for variable
               selectizeInput("variable_sinput", "Variable", choices = NULL),
               #Checkbox menu for grouping Variable
-              checkboxGroupInput("grouping_variable_sinput", "Grouping Variable", choices = NULL)
+              checkboxGroupInput("grouping_variable_sinput", "Variablenwert", choices = NULL)
             ), # end of dashboard controlbar
             fluidRow(
               column(width = 10,
