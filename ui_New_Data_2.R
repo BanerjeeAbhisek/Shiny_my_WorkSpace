@@ -17,7 +17,7 @@ user_base <- tibble::tibble(
   user = c("user11", "user2"),
   password = sapply(c("pass11", "pass2"), sodium::password_store),
   permissions = c("admin", "standard"),
-  name = c("User One", "User Two")
+  name = c("User One", "User Two") 
 )
 
 
@@ -302,14 +302,14 @@ server <- function(input, output, session) {
     total <- sum(xx$Freq)
     xx$proportion <- round(xx$Freq / total,2)
     
-    plot_ly(x = xx$Var1, y = xx$Freq, type = "bar",text = ~paste("Punkte :", xx$Var1,
+    plot_ly(x = xx$Var1, y = round(xx$Freq * 100/sum(xx$Freq),2), type = "bar",text = ~paste("Punkte :", xx$Var1,
                                                                  "<br> Anzahl :", xx$Freq," von ",total,
                                                                  "<br> Proportion :", xx$proportion),
             textposition = "none",
             hoverinfo = "text" ) %>%
       layout(
         xaxis = list(title = "Punkte"),
-        yaxis = list(title = "Anzahl"),
+        yaxis = list(title = "Percentage"),
         barmode = "group",  # Set bar mode to "group" for side-by-side bars
         bargap = 0.2  # Adjust the bargap to make the bars thinner (you can experiment with different values)
         
@@ -329,7 +329,8 @@ server <- function(input, output, session) {
       arrange(master_id) %>%
       group_by(master_id, punkte) %>%
       count() %>%
-      ungroup()
+      ungroup() %>%
+      dplyr::mutate(percentage = round(n*100/sum(n),2))
     
   })
   
@@ -337,15 +338,15 @@ server <- function(input, output, session) {
   # Create the histogram for the OVERALL tab when versions are selected
   output$plot_overall_version <- renderPlotly({
     
-    plot_ly(plotly_hist_data_versions(), x = ~punkte, y = ~n, type = 'bar', color = ~master_id, colors = "Blues",
+    plot_ly(plotly_hist_data_versions(), x = ~punkte, y = ~percentage, type = 'bar', color = ~master_id, colors = "Blues",
             text = ~paste("Version :", master_id,
                               "<br> Punkte :",  punkte,
                               "<br> Anzahl :",  n , " von ",sum(n),
-                              "<br> Percentage :", round( n/sum(n),2), "%"), textposition = "none",
+                              "<br> Percentage :", round( n * 100 /sum(n),2), "%"), textposition = "none",
             hoverinfo = "text") %>%
       layout(title = "",
              xaxis = list(title = "Punkte", tickvals = ~punkte),
-             yaxis = list(title = "Anzahl"),
+             yaxis = list(title = "Percentage"),
              barmode = 'group',
              showlegend = TRUE)
     
