@@ -32,5 +32,6 @@ pacman::p_load(dplyr,
                grDevices,
                shinyauthr,
                openssl,
-               bcrypt)#,
+               bcrypt,
+               RColorBrewer)#,
 #               bslib)
