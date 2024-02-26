@@ -53,7 +53,7 @@ ui <- fluidPage(
                       login_title = 'Anmelden'),
   
   # Sidebar to show user info after login
-  uiOutput("dashboard_ui"),
+  uiOutput("dashboard_ui")
   
   
   
@@ -123,6 +123,8 @@ server <- function(input, output, session) {
             tabName = "Overall",
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
+              #Checkbox menu for Module
+              #checkboxGroupInput("module_overall", "Module", choices = sort(unique(data_overall$modulcode)), selected = sort(unique(data_overall$modulcode))),
               # Dropdown menu for Task Name
               selectizeInput("task_name_overall", "Aufgabe", choices = sort(unique(data_overall$exercise_name))),
               # Dropdown menu for Stage
@@ -134,24 +136,24 @@ server <- function(input, output, session) {
               column(width = 10,
                      conditionalPanel(
                        condition = "input.version_button == 'No'",
-                     box(
-                       title = uiOutput("plot_overall_title"),
-                       status = "primary",
-                       solidHeader = TRUE,
-                       collapsible = TRUE,
-                       width = 12,  # Set the width (out of 12 columns)
-                       height = 200, # Set the height in pixels
-                       plotlyOutput("plot_overall") 
-                     ),#End of Box
-                     box(
-                       title = uiOutput("table_overall_title"),
-                       status = "primary",
-                       solidHeader = TRUE,
-                       collapsible = TRUE,
-                       width = 12,  # Set the width (out of 12 columns)
-                       height = 200, # Set the height in pixels
-                       DTOutput('table_output_overall')
-                     )#End of Box
+                       box(
+                         title = uiOutput("plot_overall_title"),
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         plotlyOutput("plot_overall") 
+                       ),#End of Box
+                       box(
+                         title = uiOutput("table_overall_title"),
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         DTOutput('table_output_overall')
+                       )#End of Box
                      ),#End of conditional panel
                      conditionalPanel(
                        condition = "input.version_button == 'Yes'",
@@ -226,6 +228,16 @@ server <- function(input, output, session) {
   
   
   # Update choices 
+  #observeEvent(input$module_overall, {
+    
+    #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
+    #choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$modulcode ==  input$module_overall , 3]))))})
+    
+    #updateSelectizeInput(session, "task_name_overall", choices = choices_1())
+  #})
+  
+  
+  # Update choices 
   observeEvent(input$task_name_overall, {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
@@ -233,6 +245,14 @@ server <- function(input, output, session) {
     
     updateSelectizeInput(session, "stage_overall", choices = choices_1())
   })
+  
+  
+  # Update choices 
+  # observeEvent(c(input$task_name_overall,input$stage_overall), {
+  
+  # choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall & data_overall$stage == input$stage_overall , 2]))))})
+  #   updateSelectizeInput(session, "module_overall", choices = choices_1())
+  #})
   
   
   # Update choices 
@@ -288,7 +308,8 @@ server <- function(input, output, session) {
     
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
-                    stage == input$stage_overall) 
+                    stage == input$stage_overall)
+                    #modulcode == input$module_overall) 
   })
   
   # Create the histogram for the OVERALL tab when versions are not selected
@@ -303,8 +324,8 @@ server <- function(input, output, session) {
     xx$proportion <- round(xx$Freq / total,2)
     
     plot_ly(x = xx$Var1, y = round(xx$Freq * 100/sum(xx$Freq),2), type = "bar",text = ~paste("Punkte :", xx$Var1,
-                                                                 "<br> Anzahl :", xx$Freq," von ",total,
-                                                                 "<br> Proportion :", xx$proportion),
+                                                                                             "<br> Anzahl :", xx$Freq," von ",total,
+                                                                                             "<br> Proportion :", xx$proportion),
             textposition = "none",
             hoverinfo = "text" ) %>%
       layout(
@@ -326,11 +347,15 @@ server <- function(input, output, session) {
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
                     stage == input$stage_overall) %>%
+                    #ämodulcode == input$module_overall) %>%
       arrange(master_id) %>%
       group_by(master_id, punkte) %>%
       count() %>%
       ungroup() %>%
-      dplyr::mutate(percentage = round(n*100/sum(n),2))
+      group_by(master_id) %>%
+      mutate(total_punkte = sum(n)) %>%
+      dplyr::mutate(percentage = round(n*100/total_punkte, 2)) %>%
+      ungroup()
     
   })
   
@@ -340,9 +365,9 @@ server <- function(input, output, session) {
     
     plot_ly(plotly_hist_data_versions(), x = ~punkte, y = ~percentage, type = 'bar', color = ~master_id, colors = "Blues",
             text = ~paste("Version :", master_id,
-                              "<br> Punkte :",  punkte,
-                              "<br> Anzahl :",  n , " von ",sum(n),
-                              "<br> Percentage :", round( n * 100 /sum(n),2), "%"), textposition = "none",
+                          "<br> Punkte :",  punkte,
+                          "<br> Anzahl :",  n , " von ",total_punkte,
+                          "<br> Percentage :", round( n * 100 /total_punkte,2), "%"), textposition = "none",
             hoverinfo = "text") %>%
       layout(title = "",
              xaxis = list(title = "Punkte", tickvals = ~punkte),
@@ -481,9 +506,10 @@ server <- function(input, output, session) {
   
   # Create the data table for the OVERALL section when version selected
   default_table_overall_versions = reactive({
-
-    p = round(plotly_hist_data_versions()$n * 100 / sum(plotly_hist_data_versions()$n),2)
-    result_df=data.frame("Versions" = plotly_hist_data_versions()$master_id, "Punkte" = plotly_hist_data_versions()$punkte, "Anzahl" = plotly_hist_data_versions()$n,  "Percentage"= paste(p, "%", sep=""))
+    
+    
+    #p = round(plotly_hist_data_versions()$n * 100 / sum(plotly_hist_data_versions()$total_punkte),2)
+    result_df=data.frame("Versions" = plotly_hist_data_versions()$master_id, "Punkte" = plotly_hist_data_versions()$punkte, "Anzahl" = plotly_hist_data_versions()$n,  "Percentage"= paste(plotly_hist_data_versions()$percentage, "%", sep=""))
     
   })
   
