@@ -164,3 +164,14 @@ table.dataTable.row-border > tbody > tr > th, table.dataTable.row-border > tbody
   background-size: 50px;
   background-position: 10px 0%;
 }
+
+
+a.login {
+  font-weight: bold;
+  color: #cccbc8;
+}
+
+a.login:hover {
+  font-weight: bolder;
+  color: #1f1919;
+}
