@@ -33,7 +33,7 @@ ui <- fluidPage(
   
   # logout button
   div(class = "pull-top", 
-      p(class = 'own_h' ,'Analyseboard für Deutsch als Zweit- und Fremdsprache'), 
+      p(class = 'own_h' ,' '), 
       p(shinyauthr::logoutUI(id = "logout",
                              label = 'Abmelden'))
   ),
@@ -49,7 +49,7 @@ ui <- fluidPage(
                           tags$p(
                             " ", 
                             class = "text-center"),
-                          HTML("<center><div style=padding-top:30px;padding-bottom:5px;font-size:12px><p> Haben Sie ihr <a href=mailto:jens.klenke@vwl.uni-due.de class='login'>Passwort vergessen</a> ?</p></div></center>")
+                          HTML("<center><div style=padding-top:30px;padding-bottom:5px;font-size:12px><p> Haben Sie ihr <a href=mailto:jens.klenke@vwl.uni-due.de class='login'>Passwort vergessen</a>?</p></div></center>")
                           )
                       ),
   
@@ -100,7 +100,7 @@ server <- function(input, output, session) {
       title = 'Analyseboard für Deutsch als Zweit- und Fremdsprache',
       
       # Dashboard header
-      dashboardHeader( titleWidth = 230),
+      dashboardHeader(title = 'DaZ / DaF', titleWidth = 230),
       # Dashboard Sidebar
       dashboardSidebar(
         sidebarMenu(
