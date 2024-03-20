@@ -2,17 +2,10 @@
 source(here::here("packages.R"))
 
 # load and modify the data
-# Example data
-load(here::here("example_data_shiny.RData"))
 # Data for the overall tab
-load(here::here("results_points_per_stage.RData"))
+load(here::here("data_overall.RData"))
 # Data for the Student's Input tab
-load(here::here("results_per_input.RData"))
-
-# Change later # inefficent 
-data <- example_data # later change 
-data_overall = points_per_stage
-data_sinput = points_per_Input
+load(here::here("data_sinput.RData"))
 
 # dataframe that holds usernames, passwords and other user data
 user_base <- tibble::tibble(
@@ -124,7 +117,7 @@ server <- function(input, output, session) {
               #Checkbox menu for Module
               checkboxGroupInput("module_overall", "Module", choices = sort(unique(data_overall$modulcode)), selected = sort(unique(data_overall$modulcode))),
               # Dropdown menu for Task Name
-              selectizeInput("task_name_overall", "Aufgabe", choices = sort(unique(data_overall$exercise_name))),
+              selectizeInput("task_name_overall", "Aufgabe", choices = c(' ', sort(unique(data_overall$exercise_name)))),
               # Dropdown menu for Stage
               selectizeInput("stage_overall", "Stage", choices = NULL),
               # Radio button for versions
