@@ -124,7 +124,7 @@ server <- function(input, output, session) {
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
               #Checkbox menu for Module
-              checkboxGroupInput("module_overall", "Module", choices = sort(unique(data_overall$modulcode)), selected = sort(unique(data_overall$modulcode))),
+              checkboxGroupInput("module_overall", "Module", NULL),
               # Dropdown menu for Task Name
               selectizeInput("task_name_overall", "Aufgabe", choices = NULL),
               # Dropdown menu for Stage
@@ -227,14 +227,16 @@ server <- function(input, output, session) {
   
   
   
-  # Update choices 
-  observeEvent(input$module_overall, {
+  
+  observe({
+    # Update choices for the selectInput dynamically based on changes in the data
+    choices <- sort(unique(data_overall$modulcode))
+    updateCheckboxGroupInput(session, "module_overall", choices = choices, selected = choices)
     
-    #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-    choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$modulcode ==  input$module_overall , 3]))))})
-    
-    updateSelectizeInput(session, "task_name_overall", choices = choices_1())
   })
+  
+  
+  
   
   
   # Update choices 
@@ -248,10 +250,10 @@ server <- function(input, output, session) {
   
   
   # Update choices 
-  # observeEvent(c(input$task_name_overall,input$stage_overall), {
-  
-  # choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall & data_overall$stage == input$stage_overall , 2]))))})
-  #   updateSelectizeInput(session, "module_overall", choices = choices_1())
+ # observeEvent(c(input$task_name_overall,input$stage_overall), {
+    
+# choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall & data_overall$stage == input$stage_overall , 2]))))})
+ #   updateSelectizeInput(session, "module_overall", choices = choices_1())
   #})
   
   

@@ -12,7 +12,7 @@ load(here::here("results_per_input.RData"))
 # Change later # inefficent 
 data <- example_data # later change 
 data_overall = points_per_stage
-data_sinput = points_per_Input
+data_sinput = results_per_input
 
 # dataframe that holds usernames, passwords and other user data
 user_base <- tibble::tibble(
