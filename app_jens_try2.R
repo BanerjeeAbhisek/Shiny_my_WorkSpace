@@ -23,20 +23,30 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two") 
 )
 
+
+
 # Make a common function for the paste
 paste_fun <- function(task, stage){ return(paste("Aufgabe:", task, " - Stage: ", stage)) }
 # Make a function for wrapping texts
-truncate_and_wrap <- function(x, width = 25, max_chars = 30) {
+truncate_and_wrap <- function(x, width = 18, max_chars = 30) {
   if (is.na(x)) {
     return("")
   } else if (nchar(x) <= max_chars) {
     return(x)
   } else {
-    truncated_label <- substr(x, 1, width)  # Truncate to max_chars characters
-    truncated_label <- paste0(truncated_label, "...")  # Insert ... after max_chars-th character
+    # Truncate to the first 18 characters
+    truncated_label <- substr(x, 1, width) 
+    
+    # Get the median character
+    median_character <- substr(x, nchar(x) %/% 2 + 1, nchar(x) %/% 2 + 4)
+    
+    # Get the last three characters
+    last_three_chars <- substr(x, nchar(x) - 2, nchar(x))
+    
+    # Combine all components with "..." in between
+    truncated_label <- paste0(truncated_label, "...", median_character,"...", last_three_chars) 
+    
     return(truncated_label)
-    #wrapped_label <- strwrap(truncated_label, width = width)  # Wrap text into lines of specified width
-    #return(paste(wrapped_label, collapse = "<br>"))  # Combine wrapped lines with <br> as separator
   }
 }
 
@@ -150,24 +160,24 @@ server <- function(input, output, session) {
             ), # end of dashboard controlbar
             fluidRow(
               column(width = 10,
-                       box(
-                         title = uiOutput("plot_overall_title"),
-                         status = "primary",
-                         solidHeader = TRUE,
-                         collapsible = TRUE,
-                         width = 12,  # Set the width (out of 12 columns)
-                         height = 200, # Set the height in pixels
-                         plotlyOutput("plot_overall") 
-                       ),#End of Box
-                       box(
-                         title = uiOutput("table_overall_title"),
-                         status = "primary",
-                         solidHeader = TRUE,
-                         collapsible = TRUE,
-                         width = 12,  # Set the width (out of 12 columns)
-                         height = 200, # Set the height in pixels
-                         DTOutput('table_output_overall')
-                       )#End of Box
+                     box(
+                       title = uiOutput("plot_overall_title"),
+                       status = "primary",
+                       solidHeader = TRUE,
+                       collapsible = TRUE,
+                       width = 12,  # Set the width (out of 12 columns)
+                       height = 200, # Set the height in pixels
+                       plotlyOutput("plot_overall") 
+                     ),#End of Box
+                     box(
+                       title = uiOutput("table_overall_title"),
+                       status = "primary",
+                       solidHeader = TRUE,
+                       collapsible = TRUE,
+                       width = 12,  # Set the width (out of 12 columns)
+                       height = 200, # Set the height in pixels
+                       DTOutput('table_output_overall')
+                     )#End of Box
               )#End of column
             ) #End of fluidRow
           ), # end of tab 1
@@ -189,7 +199,7 @@ server <- function(input, output, session) {
               
               
               
-            
+              
             ), # end of dashboard controlbar
             fluidRow(
               column(width = 10,
@@ -243,9 +253,9 @@ server <- function(input, output, session) {
   observeEvent(c(input$task_name_overall, input$stage_overall), {
     
     choices_1 = reactive({unique(subset(data_overall, 
-                            #modulcode == input$module_sinput &
-                              exercise_name == input$task_name_overall & 
-                              stage ==  input$stage_overall )$master_id)}) 
+                                        #modulcode == input$module_sinput &
+                                        exercise_name == input$task_name_overall & 
+                                          stage ==  input$stage_overall )$master_id)}) 
     
     updateCheckboxGroupInput(session, "master_id_overall", choices = choices_1(), selected = choices_1())
   })
@@ -291,14 +301,14 @@ server <- function(input, output, session) {
       # Render dropdown menu for dropdown type
       # For example:
       tagList(
-      selectizeInput("fieldname_sinput_1", label = HTML("Dropdown Questions <br> Field Name"), choices = NULL),
-      checkboxGroupInput("master_id_dropdown_sinput", label = "Master ID", choices = NULL)
+        selectizeInput("fieldname_sinput_1", label = HTML("Dropdown Questions <br> Field Name"), choices = NULL),
+        checkboxGroupInput("master_id_dropdown_sinput", label = "Master ID", choices = NULL)
       )# End of tagList
       
     } else if (filtered == "Fill-In") {
       # Render input for fill-in type
       # For example:
-      textInput("fill_in_input", "Fill-in Input", value = "")
+      checkboxGroupInput("fillin_options", label = HTML("Fill-In Questions <br> Master ID"), choices = NULL)
     } else {
       # Render default input if type is not recognized
       # For example:
@@ -306,6 +316,7 @@ server <- function(input, output, session) {
     }
   })
   
+  # Conditional Output
   output$conditional_plot_panel <- renderUI({
     filtered <- filtered_data()
     
@@ -313,9 +324,11 @@ server <- function(input, output, session) {
       plotlyOutput("plot_sinput_mc")
     } else if (filtered == "Dropdown") {
       plotlyOutput("plot_sinput_dropdown")
+    } else if (filtered == "Fill-In") {
+      plotlyOutput("plot_sinput_fillin")  
     } else {
       # Default output if type is not recognized
-      plotOutput("invalid_type_message")
+      plotOutput("INVALID CHOICE")
     }
   })
   
@@ -335,11 +348,12 @@ server <- function(input, output, session) {
   
   
   
-  # Inputs for MC type questions
+  # Inputs for MC type questions - Master ID
   observeEvent(c(input$module_sinput,input$task_name_sinput,input$stage_sinput), {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-    choices_1 = reactive({unique(subset(data_sinput, 
+    choices_1 = reactive({unique(subset(data_sinput,
+                                        !is.na(master_id) &
                                         modulcode == input$module_sinput &
                                           exercise_name == input$task_name_sinput & 
                                           stage ==  input$stage_sinput )$master_id)}) 
@@ -352,9 +366,9 @@ server <- function(input, output, session) {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
     choices_1 = reactive({sort(unique(subset(data_sinput, 
-                                        modulcode == input$module_sinput &
-                                          exercise_name == input$task_name_sinput & 
-                                          stage ==  input$stage_sinput )$feldname))}) 
+                                             modulcode == input$module_sinput &
+                                               exercise_name == input$task_name_sinput & 
+                                               stage ==  input$stage_sinput )$feldname))}) 
     
     updateSelectizeInput(session, "fieldname_sinput_1", choices = choices_1())
   })
@@ -362,23 +376,38 @@ server <- function(input, output, session) {
   
   
   
-    
   
   
+  # Inputs for Dropdown type questions - Master ID
   observeEvent(c(input$module_sinput,input$task_name_sinput,input$stage_sinput), {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
     choices_1 = reactive({data_overall %>%
-      filter(modulcode == input$module_sinput &
-               exercise_name == input$task_name_sinput & 
-               stage == input$stage_sinput) %>%
-      pull(master_id) %>%
-      unique() %>%
-      sort()})          # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        filter(!is.na(master_id),
+               modulcode == input$module_sinput &
+                 exercise_name == input$task_name_sinput & 
+                 stage == input$stage_sinput) %>%
+        pull(master_id) %>%
+        unique() %>%
+        sort()})          # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     updateCheckboxGroupInput(session, "master_id_dropdown_sinput", choices = choices_1(), selected = choices_1())
   })
-
+  
+  
+  
+  # Inputs for Fill-In type questions - Master ID
+  observeEvent(c(input$module_sinput,input$task_name_sinput,input$stage_sinput), {
+    
+    #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
+    choices_1 = reactive({unique(subset(data_sinput,
+                                        !is.na(master_id) &
+                                          modulcode == input$module_sinput &
+                                          exercise_name == input$task_name_sinput & 
+                                          stage ==  input$stage_sinput )$master_id)}) 
+    
+    updateCheckboxGroupInput(session, "fillin_options", choices = choices_1(), selected = choices_1())
+  })
   
   
   
@@ -426,33 +455,32 @@ server <- function(input, output, session) {
   
   
   
-
+  
   
   # Create data for the STUDENT's INPUT section for MC type questions
   plotly_bar_data <- reactive({
     
     data_sinput %>%
-      dplyr::filter(modulcode %in% input$module_sinput,
+      dplyr::filter(
                     exercise_name == input$task_name_sinput,
-                    stage == input$stage_sinput
+                    stage == input$stage_sinput,
+                    modulcode %in% input$module_sinput
       ) %>%
-      #mutate(last_alpha_pos = max(str_locate_all(master_id, "[[:alpha:]]")[[1]])) %>%
-      #mutate(master_id = substr(master_id, last_alpha_pos, nchar(master_id))) %>%
-      
+      dplyr::filter(!is.na(master_id)) %>%
       dplyr::filter(master_id %in% input$mc_options) %>%
-      # has to be changed in the final version (probably)
       dplyr::mutate(right = dplyr::case_when(
-        points_individual == 100 ~ 'right',
-        .default = 'false' 
+        points_individual == 100 ~ '100',
+        TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
       )) %>%
-      dplyr::mutate(right = factor(right, levels = c('right', 'false'))) %>%
       dplyr::group_by(master_id,feldinhalt) %>%
       dplyr::add_count(name = 'N') %>%
       dplyr::group_by(master_id,feldinhalt, right, N) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
       dplyr::mutate(percent = n_i/N*100) %>%
-      dplyr::mutate(feldinhalt_trimmed = truncate_and_wrap(feldinhalt))
+      dplyr::mutate(feldinhalt_trimmed = truncate_and_wrap(feldinhalt))%>%
+      dplyr::mutate(color_values =as.numeric(right) / 100)
+    
   })
   
   
@@ -469,7 +497,8 @@ server <- function(input, output, session) {
       
       plotlylist[[i]] = plotly_bar_data() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~feldinhalt_trimmed, y = ~percent, color = ~right, colors = c('right' = '#008000', 'false' = '#FF0000'), 
+        plot_ly(x = ~feldinhalt_trimmed, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+                colorscale = list(c(0,1), c("red", "green"))), 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                   "<br> Anzahl :", n_i," von ",N,
                   "<br> Proportion :", round(percent,2)),
@@ -480,7 +509,8 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i]))  
+               xaxis = list (title = unique_master_id[i])) %>%
+        hide_colorbar() 
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
       
       
@@ -503,33 +533,28 @@ server <- function(input, output, session) {
   plotly_bar_data_dropdown <- reactive({
     
     data_sinput %>%
-      dplyr::filter(modulcode == input$module_sinput,
+      dplyr::filter(
                     exercise_name == input$task_name_sinput,
-                    stage == input$stage_sinput
+                    stage == input$stage_sinput,
+                    modulcode %in% input$module_sinput
       ) %>%
+      dplyr::filter(!is.na(master_id)) %>%
       dplyr::filter(master_id %in% input$master_id_dropdown_sinput) %>%
-      # has to be changed in the final version (probably)
       dplyr::mutate(right = dplyr::case_when(
-        points_individual == 100 ~ 'right',
-        TRUE ~ 'false' 
+        points_individual == 100 ~ '100',
+        TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
       )) %>%
-      dplyr::mutate(right = factor(right, levels = c('right', 'false'))) %>%
       dplyr::group_by(master_id,var_value) %>%
       dplyr::add_count(name = 'N') %>%
-      dplyr::mutate(ni_right = sum(right == 'right'),
-                    ni_false = sum(right == 'false')) %>%
-      dplyr::ungroup() %>%
-      tidyr::pivot_longer(cols = c(ni_right, ni_false),
-                          names_to = "indicator",
-                          values_to = "ni") %>%
-      dplyr::mutate(indicator = factor(indicator, levels = c('ni_right', 'ni_false'),
-                                       labels = c('right', 'false'))) %>%
-      dplyr::group_by(master_id, var_value, N, indicator, ni) %>%
-      dplyr::mutate(percent = ni/N*100)%>%
+      dplyr::group_by(master_id,var_value, right, N) %>%
+      dplyr::count(name = 'n_i') %>%
+      #   dplyr::arrange(feldinhalt, desc(right)) %>%
+      dplyr::mutate(percent = n_i/N*100) %>%
       rowwise() %>%
-      dplyr::mutate(var_value_trimmed = truncate_and_wrap(var_value)) %>%
+      dplyr::mutate(var_value_trimmed = truncate_and_wrap(var_value))%>%
       dplyr::ungroup() %>%
-      dplyr::select(master_id, var_value, N, indicator, ni, percent, var_value_trimmed)%>%
+      dplyr::select(master_id, var_value, N,right,  n_i, percent, var_value_trimmed)%>%
+      dplyr::mutate(color_values =as.numeric(right) / 100)%>%
       distinct() 
     
   })
@@ -547,9 +572,10 @@ server <- function(input, output, session) {
       
       plotlylist[[i]] = plotly_bar_data_dropdown() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~var_value_trimmed, y = ~percent, color = ~indicator, colors = c('right' = '#008000', 'false' = '#FF0000'), 
+        plot_ly(x = ~var_value_trimmed, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+                                                                                           colorscale = list(c(0,1), c("red", "green"))), 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
-                  "<br> Anzahl :", ni," von ",N,
+                  "<br> Anzahl :", n_i," von ",N,
                   "<br> Proportion :", round(percent,2)),
                 textposition = "none",
                 hoverinfo = "text") %>%
@@ -557,7 +583,8 @@ server <- function(input, output, session) {
         layout(barmode = "stack",
                showlegend = FALSE,
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i]))  
+               xaxis = list (title = unique_master_id[i]))  %>%
+        hide_colorbar()  
       
       
       
@@ -571,6 +598,92 @@ server <- function(input, output, session) {
     
     
   })
+  
+  
+  
+  
+  
+  
+  
+  # Create data for the STUDENT's INPUT section for Fill-In type questions
+  plotly_bar_data_fillin <- reactive({
+    
+    data_sinput %>%
+      dplyr::filter(
+        exercise_name == input$task_name_sinput,
+        stage == input$stage_sinput,
+        modulcode %in% input$module_sinput
+      ) %>%
+      dplyr::filter(!is.na(master_id)) %>%
+      dplyr::filter(master_id %in% input$fillin_options) %>%
+      dplyr::mutate(right = dplyr::case_when(
+        points_individual == 100 ~ '100',
+        TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
+      )) %>%
+      dplyr::group_by(master_id,feldname) %>%
+      dplyr::add_count(name = 'N') %>%
+      dplyr::group_by(master_id,feldname, right, N) %>%
+      dplyr::count(name = 'n_i') %>%
+      #   dplyr::arrange(feldinhalt, desc(right)) %>%
+      dplyr::mutate(percent = n_i/N*100) %>%
+      dplyr::mutate(color_values =as.numeric(right) / 100)
+    
+  })
+  
+  
+  
+  # create the stacked bar plots or STUDENT's INPUT section for Fill-In type
+  output$plot_sinput_fillin <- renderPlotly({
+    
+    unique_master_id = unique(plotly_bar_data_fillin()$master_id)
+    
+    plotlylist= list()
+    
+    for( i in 1:length(unique(plotly_bar_data_fillin()$master_id))){
+      
+      
+      plotlylist[[i]] = plotly_bar_data_fillin() %>% 
+        dplyr::filter(master_id == unique_master_id[i]) %>%
+        plot_ly(x = ~feldname, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+                                                                                            colorscale = list(c(0,1), c("red", "green"))), 
+                text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
+                  "<br> Anzahl :", n_i," von ",N,
+                  "<br> Proportion :", round(percent,2)),
+                textposition = "none",
+                hoverinfo = "text") %>%
+        add_bars() %>%
+        layout(barmode = "stack",
+               showlegend = FALSE,
+               #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
+               yaxis = list (title = "Prozent"),
+               xaxis = list (title = unique_master_id[i])) %>%
+        hide_colorbar() 
+      #xaxis = list (title = truncate_title(unique_master_id[i])))  
+      
+      
+      
+    }
+    
+    
+    subplot(plotlylist, titleX = TRUE, shareY = TRUE)  %>%
+      layout(barmode = 'stack', showlegend = FALSE)
+    
+    
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   # Create the data table for the OVERALL section when version not selected
@@ -732,7 +845,7 @@ server <- function(input, output, session) {
     h4(title_text)  
   })
   
- 
+  
   
 } # End of server 
 
