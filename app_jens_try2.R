@@ -817,31 +817,25 @@ server <- function(input, output, session) {
   
   
   
-  # Create heading for histogram for OVERALL section when versions are not selected
+  # Create heading for histogram for OVERALL section 
   output$plot_overall_title <- renderUI({
     
     title_text = paste_fun(input$task_name_overall,input$stage_overall)
     h4(title_text)  
   })
   
-  # Create heading for data table for OVERALL section when versions are not selected
+  # Create heading for data table for OVERALL section
   output$table_overall_title <- renderUI({
     
     title_text  = paste_fun(input$task_name_overall,input$stage_overall) 
     h4(title_text)  
   })
   
-  # Create heading for histogram for OVERALL section when versions are selected
-  output$plot_overall_title_version <- renderUI({
-    
-    title_text = paste_fun(input$task_name_overall,input$stage_overall)
-    h4(title_text)  
-  })
   
-  # Create heading for data table for OVERALL section when versions are selected
-  output$table_overall_title_version <- renderUI({
+  # Create heading for Plots for SINPUT 
+  output$plot_sinput_title <- renderUI({
     
-    title_text  = paste_fun(input$task_name_overall,input$stage_overall) 
+    title_text  = paste_fun(input$task_name_sinput,input$stage_sinput) 
     h4(title_text)  
   })
   
