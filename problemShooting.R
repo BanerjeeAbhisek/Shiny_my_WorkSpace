@@ -19,7 +19,7 @@ user_base <- tibble::tibble(
 # Make a common function for the paste
 paste_fun <- function(task, stage){ return(paste("Aufgabe:", task, " - Stage: ", stage)) }
 # Make a function for wrapping texts
-truncate_and_wrap <- function(x, width = 18, max_chars = 30) {
+truncate_and_wrap <- function(x, width = 20, max_chars = 30) {
   if (is.na(x)) {
     return("")
   } else if (nchar(x) <= max_chars) {
@@ -29,13 +29,14 @@ truncate_and_wrap <- function(x, width = 18, max_chars = 30) {
     truncated_label <- substr(x, 1, width) 
     
     # Get the median character
-    median_character <- substr(x, nchar(x) %/% 2 + 1, nchar(x) %/% 2 + 4)
+    #median_character <- substr(x, nchar(x) %/% 2 + 1, nchar(x) %/% 2 + 4)
     
     # Get the last three characters
-    last_three_chars <- substr(x, nchar(x) - 2, nchar(x))
+    last_five_chars <- substr(x, nchar(x) - 5, nchar(x))
     
     # Combine all components with "..." in between
-    truncated_label <- paste0(truncated_label, "...", median_character,"...", last_three_chars) 
+    #truncated_label <- paste0(truncated_label, "...", median_character,"...", last_three_chars) 
+    truncated_label <- paste0(truncated_label, "...", last_five_chars) 
     
     return(truncated_label)
   }
@@ -147,10 +148,18 @@ server <- function(input, output, session) {
               # Dropdown menu for Stage
               selectizeInput("stage_overall", "Stage", choices = NULL),
               # Radio button for versions
-              checkboxGroupInput("master_id_overall", "Master ID", choices = NULL)
+              radioButtons("version_button", "Version", choices = c("Yes","No"), selected = "No", inline = TRUE),
+              
+              conditionalPanel(
+                condition = "input.version_button == 'Yes'",
+                checkboxGroupInput("master_id_overall", "Master ID", choices = NULL)
+              )
+              #checkboxGroupInput("master_id_overall", "Master ID", choices = NULL)
             ), # end of dashboard controlbar
             fluidRow(
               column(width = 10,
+                     conditionalPanel(
+                       condition = "input.version_button == 'No'",
                      box(
                        title = uiOutput("plot_overall_title"),
                        status = "primary",
@@ -169,6 +178,28 @@ server <- function(input, output, session) {
                        height = 200, # Set the height in pixels
                        DTOutput('table_output_overall')
                      )#End of Box
+                     ),#End of conditional panel
+                     conditionalPanel(
+                       condition = "input.version_button == 'Yes'",
+                       box(
+                         title = uiOutput("plot_overall_title_version"),
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         plotlyOutput("plot_overall_version") 
+                       ),#End of Box
+                       box(
+                         title = uiOutput("table_overall_title_version"),
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         DTOutput('table_output_overall_versions')
+                       )#End of Box
+                     )#End of conditional panel
               )#End of column
             ) #End of fluidRow
           ), # end of tab 1
@@ -410,8 +441,7 @@ server <- function(input, output, session) {
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
                     stage == input$stage_overall,
-                    modulcode %in% input$module_overall, 
-                    master_id %in% input$master_id_overall) 
+                    modulcode %in% input$module_overall) 
   })
   
   # Create the histogram for the OVERALL tab when versions are not selected
@@ -443,6 +473,45 @@ server <- function(input, output, session) {
   
   
   
+  # Create data for Histogram for the OVERALL tab when versions are selected
+  plotly_hist_data_versions <- reactive({
+    
+    data_overall %>%
+      dplyr::filter(exercise_name == input$task_name_overall,
+                    stage == input$stage_overall,
+                    master_id %in% input$master_id_overall ) %>%
+      #ämodulcode == input$module_overall) %>%
+      arrange(master_id) %>%
+      group_by(master_id, punkte) %>%
+      count() %>%
+      ungroup() %>%
+      group_by(master_id) %>%
+      mutate(total_punkte = sum(n)) %>%
+      dplyr::mutate(percentage = round(n*100/total_punkte, 2)) %>%
+      ungroup()
+    
+  })
+  
+  
+  # Create the histogram for the OVERALL tab when versions are selected
+  output$plot_overall_version <- renderPlotly({
+    
+    plot_ly(plotly_hist_data_versions(), x = ~punkte, y = ~percentage, type = 'bar', color = ~master_id, colors = "Blues",
+            text = ~paste("Version :", master_id,
+                          "<br> Punkte :",  punkte,
+                          "<br> Anzahl :",  n , " von ",total_punkte,
+                          "<br> Percentage :", round( n * 100 /total_punkte,2), "%"), textposition = "none",
+            hoverinfo = "text") %>%
+      layout(title = "",
+             xaxis = list(title = "Punkte", tickvals = ~punkte),
+             yaxis = list(title = "Percentage"),
+             barmode = 'group',
+             showlegend = TRUE)
+    
+    
+  })
+  
+  
   
   
   
@@ -458,6 +527,7 @@ server <- function(input, output, session) {
         modulcode %in% input$module_sinput
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
+      dplyr::filter(!is.na(feldinhalt)) %>%
       dplyr::filter(master_id %in% input$mc_options) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
@@ -488,7 +558,7 @@ server <- function(input, output, session) {
       
       plotlylist[[i]] = plotly_bar_data() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~feldinhalt_trimmed, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+        plot_ly(x = ~feldinhalt, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
                                                                                             colorscale = list(c(0,1), c("red", "green"))), 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                   "<br> Anzahl :", n_i," von ",N,
@@ -500,7 +570,9 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i])) %>%
+               xaxis = list (title = unique_master_id[i], 
+                             tickvals = ~feldinhalt,
+                             ticktext = ~feldinhalt_trimmed)) %>%
         hide_colorbar() 
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
       
@@ -531,6 +603,7 @@ server <- function(input, output, session) {
         modulcode %in% input$module_sinput
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
+      #dplyr::filter(!is.na(feldinhalt)) %>%
       dplyr::filter(master_id %in% input$master_id_dropdown_sinput) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
@@ -554,8 +627,27 @@ server <- function(input, output, session) {
   # create the stacked bar plots or STUDENT's INPUT section for Dropdown type
   output$plot_sinput_dropdown <- renderPlotly({
     
-    unique_master_id = unique(plotly_bar_data_dropdown()$master_id)
+   
     
+    if (all(is.na(plotly_bar_data_dropdown()$var_value))) {
+      # If all values in var_value are NA, create a single plot
+      plot_ly(plotly_bar_data_dropdown(), x = ~master_id, y = ~percent, color =  ~color_values, marker = list(color = ~color_values,
+                                                                                                               colorscale = list(c(0,1), c("red", "green"))), 
+              text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
+                "<br> Anzahl :", n_i," von ",N,
+                "<br> Proportion :", round(percent,2)),
+              textposition = "none",
+              hoverinfo = "text") %>%
+        add_bars() %>%
+        layout(barmode = "stack",
+               showlegend = FALSE,
+               yaxis = list (title = "Prozent"),
+               xaxis = list (title =""))  %>%
+        hide_colorbar()  
+    } else {
+    
+      unique_master_id = unique(plotly_bar_data_dropdown()$master_id)
+      
     plotlylist= list()
     
     for( i in 1:length(unique(plotly_bar_data_dropdown()$master_id))){
@@ -564,7 +656,7 @@ server <- function(input, output, session) {
       
       plotlylist[[i]] = plotly_bar_data_dropdown() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~var_value_trimmed, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+        plot_ly(x = ~var_value, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
                                                                                            colorscale = list(c(0,1), c("red", "green"))), 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                   "<br> Anzahl :", n_i," von ",N,
@@ -575,7 +667,9 @@ server <- function(input, output, session) {
         layout(barmode = "stack",
                showlegend = FALSE,
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i]))  %>%
+               xaxis = list (title = unique_master_id[i], 
+                             tickvals = ~var_value,
+                             ticktext = ~var_value_trimmed))  %>%
         hide_colorbar()  
       
       
@@ -587,7 +681,7 @@ server <- function(input, output, session) {
     subplot(plotlylist, titleX = TRUE, shareY = TRUE)  %>%
       layout(barmode = 'stack', showlegend = FALSE)
     
-    
+    } # end of else
     
   })
   
@@ -717,6 +811,44 @@ server <- function(input, output, session) {
   
   
   
+  # Create the data table for the OVERALL section when version selected
+  default_table_overall_versions = reactive({
+    
+    
+    #p = round(plotly_hist_data_versions()$n * 100 / sum(plotly_hist_data_versions()$total_punkte),2)
+    result_df=data.frame("Versions" = plotly_hist_data_versions()$master_id, "Punkte" = plotly_hist_data_versions()$punkte, "Anzahl" = plotly_hist_data_versions()$n,  "Percentage"= paste(plotly_hist_data_versions()$percentage, "%", sep=""))
+    
+  })
+  
+  
+  
+  # Present the table for the OVERALL section when version selected
+  output$table_output_overall_versions <- renderDT({
+    
+    req(default_table_overall_versions())
+  },extensions = 'Buttons',
+  
+  options = exprToFunction(
+    list(paging = FALSE,
+         dom = 'Bfrtip',
+         buttons = list( 
+           list(extend = 'csv',   filename = paste_fun(input$task_name_sinput,input$stage_sinput), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
+           list(extend = 'excel', filename = paste_fun(input$task_name_sinput,input$stage_sinput), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
+           list(extend = 'copy')))
+  ),# end of options  
+  
+  
+  class = "display"
+  )
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   # Create the data table for the STUDENT'S INPUT section for MC Type
   table_mc_sinput_tab = reactive({
@@ -762,8 +894,8 @@ server <- function(input, output, session) {
     plotly_bar_data_dropdown() %>%
       group_by(master_id,var_value,N) %>%
       summarise(
-        Number_of_right = sum(ifelse(indicator == 'right', ni, 0)),
-        Number_of_false = sum(ifelse(indicator == 'false', ni, 0))
+        Number_of_right = sum(ifelse(right == 'right', ni, 0)),
+        Number_of_false = sum(ifelse(right == 'false', ni, 0))
       )%>%
       dplyr::mutate(Percentage_right = round( Number_of_right/N * 100,2))%>%
       dplyr::mutate(Percentage_false = round( Number_of_false/N * 100,2))
