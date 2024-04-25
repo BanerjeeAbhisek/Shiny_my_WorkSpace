@@ -42,7 +42,11 @@ truncate_and_wrap <- function(x, width = 20, max_chars = 30) {
   }
 }
 
-
+# Make a common function for trimming master id
+extract_suffix <- function(master_id) {
+  suffix <- gsub("^.*_(\\w+_\\d+)$", "\\1", master_id)
+  return(suffix)
+}
 
 
 
@@ -570,7 +574,7 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i], 
+               xaxis = list (title = extract_suffix(unique_master_id[i]), 
                              tickvals = ~feldinhalt,
                              ticktext = ~feldinhalt_trimmed)) %>%
         hide_colorbar() 
@@ -667,7 +671,7 @@ server <- function(input, output, session) {
         layout(barmode = "stack",
                showlegend = FALSE,
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i], 
+               xaxis = list (title = extract_suffix(unique_master_id[i]), 
                              tickvals = ~var_value,
                              ticktext = ~var_value_trimmed))  %>%
         hide_colorbar()  
@@ -742,7 +746,7 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = unique_master_id[i])) %>%
+               xaxis = list (title = extract_suffix(unique_master_id[i]))) %>%
         hide_colorbar() 
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
       
@@ -853,15 +857,20 @@ server <- function(input, output, session) {
   # Create the data table for the STUDENT'S INPUT section for MC Type
   table_mc_sinput_tab = reactive({
     
+  
     
-    plotly_bar_data() %>%
-      group_by(master_id,feldinhalt,N) %>%
-      summarise(
-        Number_of_right = sum(ifelse(right == 'right', n_i, 0)),
-        Number_of_false = sum(ifelse(right == 'false', n_i, 0))
-      )%>%
-      dplyr::mutate(Percentage_right = round( Number_of_right/N * 100,2))%>%
-      dplyr::mutate(Percentage_false = round( Number_of_false/N * 100,2))
+    plotly_bar_data() %>% 
+      filter(!is.na(feldinhalt)) %>% 
+      pivot_wider(names_from = right, values_from = c(n_i, percent), names_sep = "_") %>%
+      mutate_all(~ifelse(is.na(.), 0, .))%>%
+      select(-4, -5)%>%
+      group_by(feldinhalt, master_id)%>%
+      summarize_at(vars(matches("^n_i_.*|^percent_.*")), sum) %>%
+      ungroup() %>%
+      mutate(N = rowSums(select(., starts_with("n_i")))) %>%
+      mutate(master_id = extract_suffix(master_id),  
+             across(starts_with("percent_"), ~round(., 2))) %>%
+      select(2, 1, 3, everything())
   })
   
   
@@ -891,14 +900,19 @@ server <- function(input, output, session) {
   table_dropdown_sinput_tab = reactive({
     
     
-    plotly_bar_data_dropdown() %>%
-      group_by(master_id,var_value,N) %>%
-      summarise(
-        Number_of_right = sum(ifelse(right == 'right', ni, 0)),
-        Number_of_false = sum(ifelse(right == 'false', ni, 0))
-      )%>%
-      dplyr::mutate(Percentage_right = round( Number_of_right/N * 100,2))%>%
-      dplyr::mutate(Percentage_false = round( Number_of_false/N * 100,2))
+    
+    plotly_bar_data_dropdown() %>% 
+      #filter(!is.na(var_value)) %>% 
+      pivot_wider(names_from = right, values_from = c(n_i, percent), names_sep = "_") %>%
+      mutate_all(~ifelse(is.na(.), 0, .))%>%
+      select(-3,-4, -5)%>%
+      group_by(var_value, master_id)%>%
+      summarize_at(vars(matches("^n_i_.*|^percent_.*")), sum) %>%
+      ungroup() %>%
+      mutate(N = rowSums(select(., starts_with("n_i")))) %>%
+      mutate(master_id = extract_suffix(master_id),  
+             across(starts_with("percent_"), ~round(., 2))) %>%
+      select(2, 1, 3, everything())
     
   })
   
@@ -921,6 +935,45 @@ server <- function(input, output, session) {
   }, class = "display")
   
   
+  
+  # Create the data table for the STUDENT'S INPUT section for Fillin Type
+  table_fillin_sinput_tab = reactive({
+    
+    
+    
+  
+    
+    plotly_bar_data_fillin()%>% 
+      #filter(!is.na(var_value)) %>% 
+      pivot_wider(names_from = right, values_from = c(n_i, percent), names_sep = "_") %>%
+      mutate_all(~ifelse(is.na(.), 0, .))%>%
+      select(-3, -4)%>%
+      group_by( master_id,feldname)%>%
+      summarize_at(vars(matches("^n_i_.*|^percent_.*")), sum) %>%
+      ungroup() %>%
+      mutate(N = rowSums(select(., starts_with("n_i")))) %>%
+      mutate(master_id = extract_suffix(master_id),  
+             across(starts_with("percent_"), ~round(., 2))) 
+    
+  })
+  
+  
+  
+  # Present the table for the STUDENT'S INPUT section for Fillin Type
+  output$table_fillin_sinput <- renderDT({
+    
+    req(table_fillin_sinput_tab())
+    
+    datatable(table_fillin_sinput_tab(), extensions = 'Buttons', options = list(
+      paging = FALSE,
+      dom = 'Bfrtip',
+      buttons = list( 
+        list(extend = 'csv', filename = paste(input$task_name_sinput, " - Stage:", input$stage_sinput, 'grouping'), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
+        list(extend = 'excel', filename = paste(input$task_name_sinput, " - Stage:", input$stage_sinput, 'grouping'), title = paste_fun(input$task_name_sinput,input$stage_sinput)),
+        list(extend = 'copy')
+      )
+    ))
+  }, class = "display")
   
   
   
