@@ -933,7 +933,7 @@ server <- function(input, output, session) {
       )
     ))
   }, class = "display")
-  
+   
   
   
   # Create the data table for the STUDENT'S INPUT section for Fillin Type
