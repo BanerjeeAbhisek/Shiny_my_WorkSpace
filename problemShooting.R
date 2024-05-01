@@ -384,7 +384,7 @@ server <- function(input, output, session) {
                                           exercise_name == input$task_name_sinput & 
                                           stage ==  input$stage_sinput )$master_id)}) 
     
-    updateCheckboxGroupInput(session, "mc_options", choices = choices_1(), selected = choices_1())
+    updateCheckboxGroupInput(session, "mc_options", choices = sort(choices_1()), selected = choices_1())
   })
   
   # Inputs for Dropdown type questions - Fieldname
@@ -417,7 +417,7 @@ server <- function(input, output, session) {
         unique() %>%
         sort()})          
     
-    updateCheckboxGroupInput(session, "master_id_dropdown_sinput", choices = choices_1(), selected = choices_1())
+    updateCheckboxGroupInput(session, "master_id_dropdown_sinput", choices = sort(choices_1()), selected = choices_1())
   })
   
   
@@ -432,7 +432,7 @@ server <- function(input, output, session) {
                                           exercise_name == input$task_name_sinput & 
                                           stage ==  input$stage_sinput )$master_id)}) 
     
-    updateCheckboxGroupInput(session, "fillin_options", choices = choices_1(), selected = choices_1())
+    updateCheckboxGroupInput(session, "fillin_options", choices = sort(choices_1()), selected = choices_1())
   })
   
   
@@ -542,7 +542,7 @@ server <- function(input, output, session) {
       dplyr::group_by(master_id,feldinhalt, right, N) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
-      dplyr::mutate(percent = n_i/N*100) %>%
+      dplyr::mutate(percent = round(n_i/N*100,2)) %>%
       dplyr::mutate(feldinhalt_trimmed = truncate_and_wrap(feldinhalt))%>%
       dplyr::mutate(color_values =as.numeric(right) / 100)
     
@@ -574,10 +574,10 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = extract_suffix(unique_master_id[i]), 
+               xaxis = list (title =NULL, 
                              tickvals = ~feldinhalt,
                              ticktext = ~feldinhalt_trimmed)) %>%
-        hide_colorbar() 
+        hide_colorbar() %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data()$feldinhalt)),y=107, showarrow = FALSE)
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
       
       
@@ -585,7 +585,7 @@ server <- function(input, output, session) {
     }
     
     
-    subplot(plotlylist, titleX = TRUE, shareY = TRUE)  %>%
+    subplot(plotlylist, titleX = FALSE, shareY = TRUE)  %>%
       layout(barmode = 'stack', showlegend = FALSE)
     
     
@@ -618,12 +618,14 @@ server <- function(input, output, session) {
       dplyr::group_by(master_id,var_value, right, N) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
-      dplyr::mutate(percent = n_i/N*100) %>%
+      dplyr::mutate(percent = round(n_i/N*100,2)) %>%
       rowwise() %>%
       dplyr::mutate(var_value_trimmed = truncate_and_wrap(var_value))%>%
       dplyr::ungroup() %>%
+      dplyr::mutate(right = as.numeric(right)) %>%
       dplyr::select(master_id, var_value, N,right,  n_i, percent, var_value_trimmed)%>%
       dplyr::mutate(color_values =as.numeric(right) / 100)%>%
+      dplyr::arrange(right)  %>%
       distinct() 
     
   })
@@ -671,10 +673,10 @@ server <- function(input, output, session) {
         layout(barmode = "stack",
                showlegend = FALSE,
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = extract_suffix(unique_master_id[i]), 
+               xaxis = list (title = NULL, 
                              tickvals = ~var_value,
                              ticktext = ~var_value_trimmed))  %>%
-        hide_colorbar()  
+        hide_colorbar()  %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data_dropdown()$var_value)),y=107, showarrow = FALSE)
       
       
       
@@ -682,7 +684,7 @@ server <- function(input, output, session) {
     }
     
     
-    subplot(plotlylist, titleX = TRUE, shareY = TRUE)  %>%
+    subplot(plotlylist, titleX = FALSE, shareY = TRUE)  %>%
       layout(barmode = 'stack', showlegend = FALSE)
     
     } # end of else
@@ -715,7 +717,7 @@ server <- function(input, output, session) {
       dplyr::group_by(master_id,feldname, right, N) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
-      dplyr::mutate(percent = n_i/N*100) %>%
+      dplyr::mutate(percent = round(n_i/N*100,2)) %>%
       dplyr::mutate(color_values =as.numeric(right) / 100)
     
   })
@@ -746,8 +748,8 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = extract_suffix(unique_master_id[i]))) %>%
-        hide_colorbar() 
+               xaxis = list (title = NULL)) %>%
+        hide_colorbar()  %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data_fillin()$feldname)),y=107, showarrow = FALSE)
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
       
       
@@ -755,7 +757,7 @@ server <- function(input, output, session) {
     }
     
     
-    subplot(plotlylist, titleX = TRUE, shareY = TRUE)  %>%
+    subplot(plotlylist, titleX = FALSE, shareY = TRUE)  %>%
       layout(barmode = 'stack', showlegend = FALSE)
     
     
@@ -859,18 +861,18 @@ server <- function(input, output, session) {
     
   
     
+     
+    
     plotly_bar_data() %>% 
-      filter(!is.na(feldinhalt)) %>% 
-      pivot_wider(names_from = right, values_from = c(n_i, percent), names_sep = "_") %>%
-      mutate_all(~ifelse(is.na(.), 0, .))%>%
-      select(-4, -5)%>%
-      group_by(feldinhalt, master_id)%>%
-      summarize_at(vars(matches("^n_i_.*|^percent_.*")), sum) %>%
-      ungroup() %>%
-      mutate(N = rowSums(select(., starts_with("n_i")))) %>%
-      mutate(master_id = extract_suffix(master_id),  
-             across(starts_with("percent_"), ~round(., 2))) %>%
-      select(2, 1, 3, everything())
+      dplyr::rename('%' = percent) %>%
+      dplyr::rename("Result (in%)" = right) %>%
+      dplyr::rename("n" = n_i) %>%
+      dplyr::select(-c(color_values,feldinhalt_trimmed)) %>%
+      dplyr::select(master_id, feldinhalt, `Result (in%)`,n, `%`, N) %>%
+      dplyr::filter(!is.na(feldinhalt)) %>%
+      dplyr::arrange(feldinhalt) %>%
+    dplyr::arrange(master_id) %>%
+    dplyr::arrange(feldinhalt)
   })
   
   
@@ -903,16 +905,14 @@ server <- function(input, output, session) {
     
     plotly_bar_data_dropdown() %>% 
       #filter(!is.na(var_value)) %>% 
-      pivot_wider(names_from = right, values_from = c(n_i, percent), names_sep = "_") %>%
-      mutate_all(~ifelse(is.na(.), 0, .))%>%
-      select(-3,-4, -5)%>%
-      group_by(var_value, master_id)%>%
-      summarize_at(vars(matches("^n_i_.*|^percent_.*")), sum) %>%
-      ungroup() %>%
-      mutate(N = rowSums(select(., starts_with("n_i")))) %>%
-      mutate(master_id = extract_suffix(master_id),  
-             across(starts_with("percent_"), ~round(., 2))) %>%
-      select(2, 1, 3, everything())
+      dplyr::rename('%' = percent) %>%
+      dplyr::rename("Result (in%)" = right) %>%
+      dplyr::rename("n" = n_i) %>%
+      dplyr::select(-c(color_values,var_value_trimmed)) %>%
+      dplyr::mutate(var_value = unlist(var_value)) %>%
+      dplyr::select(master_id, var_value, `Result (in%)`, n, `%`, N) %>%
+      dplyr::arrange(master_id)  %>%
+      dplyr::arrange(var_value)
     
   })
   
@@ -945,15 +945,13 @@ server <- function(input, output, session) {
     
     plotly_bar_data_fillin()%>% 
       #filter(!is.na(var_value)) %>% 
-      pivot_wider(names_from = right, values_from = c(n_i, percent), names_sep = "_") %>%
-      mutate_all(~ifelse(is.na(.), 0, .))%>%
-      select(-3, -4)%>%
-      group_by( master_id,feldname)%>%
-      summarize_at(vars(matches("^n_i_.*|^percent_.*")), sum) %>%
-      ungroup() %>%
-      mutate(N = rowSums(select(., starts_with("n_i")))) %>%
-      mutate(master_id = extract_suffix(master_id),  
-             across(starts_with("percent_"), ~round(., 2))) 
+      dplyr::rename('%' = percent) %>%
+      dplyr::rename("Result (in%)" = right) %>%
+      dplyr::rename("n" = n_i) %>%
+      dplyr::select(-c(color_values)) %>%
+      dplyr::select(master_id, feldname, `Result (in%)`, n, `%`, N) %>%
+      dplyr::arrange(master_id) %>%
+      dplyr::arrange(feldname)
     
   })
   
