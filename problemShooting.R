@@ -579,7 +579,7 @@ server <- function(input, output, session) {
                              ticktext = ~feldinhalt_trimmed)) %>%
         hide_colorbar() %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data()$feldinhalt)),y=107, showarrow = FALSE)
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
-      
+       
       
       
     }
