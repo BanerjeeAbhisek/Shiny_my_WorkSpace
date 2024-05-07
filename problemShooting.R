@@ -164,24 +164,24 @@ server <- function(input, output, session) {
               column(width = 10,
                      conditionalPanel(
                        condition = "input.version_button == 'No'",
-                     box(
-                       title = uiOutput("plot_overall_title"),
-                       status = "primary",
-                       solidHeader = TRUE,
-                       collapsible = TRUE,
-                       width = 12,  # Set the width (out of 12 columns)
-                       height = 200, # Set the height in pixels
-                       plotlyOutput("plot_overall") 
-                     ),#End of Box
-                     box(
-                       title = uiOutput("table_overall_title"),
-                       status = "primary",
-                       solidHeader = TRUE,
-                       collapsible = TRUE,
-                       width = 12,  # Set the width (out of 12 columns)
-                       height = 200, # Set the height in pixels
-                       DTOutput('table_output_overall')
-                     )#End of Box
+                       box(
+                         title = uiOutput("plot_overall_title"),
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         plotlyOutput("plot_overall") 
+                       ),#End of Box
+                       box(
+                         title = uiOutput("table_overall_title"),
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         width = 12,  # Set the width (out of 12 columns)
+                         height = 200, # Set the height in pixels
+                         DTOutput('table_output_overall')
+                       )#End of Box
                      ),#End of conditional panel
                      conditionalPanel(
                        condition = "input.version_button == 'Yes'",
@@ -283,7 +283,7 @@ server <- function(input, output, session) {
                                         exercise_name == input$task_name_overall & 
                                           stage ==  input$stage_overall )$master_id)}) 
     
-    updateCheckboxGroupInput(session, "master_id_overall", choices = choices_1(), selected = choices_1())
+    updateCheckboxGroupInput(session, "master_id_overall", choices = extract_suffix(choices_1()), selected =extract_suffix(choices_1()))
   })
   
   
@@ -384,7 +384,7 @@ server <- function(input, output, session) {
                                           exercise_name == input$task_name_sinput & 
                                           stage ==  input$stage_sinput )$master_id)}) 
     
-    updateCheckboxGroupInput(session, "mc_options", choices = sort(choices_1()), selected = choices_1())
+    updateCheckboxGroupInput(session, "mc_options", choices = sort(extract_suffix(choices_1())), selected = extract_suffix(choices_1()))
   })
   
   # Inputs for Dropdown type questions - Fieldname
@@ -417,7 +417,7 @@ server <- function(input, output, session) {
         unique() %>%
         sort()})          
     
-    updateCheckboxGroupInput(session, "master_id_dropdown_sinput", choices = sort(choices_1()), selected = choices_1())
+    updateCheckboxGroupInput(session, "master_id_dropdown_sinput", choices = sort(extract_suffix(choices_1())), selected = extract_suffix(choices_1()))
   })
   
   
@@ -432,7 +432,7 @@ server <- function(input, output, session) {
                                           exercise_name == input$task_name_sinput & 
                                           stage ==  input$stage_sinput )$master_id)}) 
     
-    updateCheckboxGroupInput(session, "fillin_options", choices = sort(choices_1()), selected = choices_1())
+    updateCheckboxGroupInput(session, "fillin_options", choices = sort(extract_suffix(choices_1())), selected = extract_suffix(choices_1()))
   })
   
   
@@ -483,8 +483,9 @@ server <- function(input, output, session) {
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
                     stage == input$stage_overall,
-                    master_id %in% input$master_id_overall ) %>%
+                    extract_suffix(master_id) %in% input$master_id_overall ) %>%
       #ämodulcode == input$module_overall) %>%
+      mutate(master_id = extract_suffix(master_id)) %>%
       arrange(master_id) %>%
       group_by(master_id, punkte) %>%
       count() %>%
@@ -532,11 +533,12 @@ server <- function(input, output, session) {
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
       dplyr::filter(!is.na(feldinhalt)) %>%
-      dplyr::filter(master_id %in% input$mc_options) %>%
+      dplyr::filter(extract_suffix(master_id) %in% input$mc_options) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
         TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
       )) %>%
+      dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id,feldinhalt) %>%
       dplyr::add_count(name = 'N') %>%
       dplyr::group_by(master_id,feldinhalt, right, N) %>%
@@ -559,11 +561,17 @@ server <- function(input, output, session) {
     
     for( i in 1:length(unique(plotly_bar_data()$master_id))){
       
+      filtered_data <- plotly_bar_data() %>%
+        dplyr::filter(master_id == unique_master_id[i])
+      
+      # Calculate the midpoint of the filtered data for the x-axis
+      x_midpoint <- (length(unique(filtered_data$feldinhalt)) - 1) / 2
+      
       
       plotlylist[[i]] = plotly_bar_data() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
         plot_ly(x = ~feldinhalt, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
-                                                                                            colorscale = list(c(0,1), c("red", "green"))), 
+                                                                                    colorscale = list(c(0,1), c("red", "green"))), 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                   "<br> Anzahl :", n_i," von ",N,
                   "<br> Proportion :", round(percent,2)),
@@ -576,10 +584,11 @@ server <- function(input, output, session) {
                yaxis = list (title = "Prozent"),
                xaxis = list (title =NULL, 
                              tickvals = ~feldinhalt,
+                             tickangle = 90,
                              ticktext = ~feldinhalt_trimmed)) %>%
-        hide_colorbar() %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data()$feldinhalt)),y=107, showarrow = FALSE)
+        hide_colorbar() %>% add_annotations(text =  unique_master_id[i] ,x = x_midpoint,y=107, showarrow = FALSE)
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
-       
+      
       
       
     }
@@ -608,11 +617,12 @@ server <- function(input, output, session) {
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
       #dplyr::filter(!is.na(feldinhalt)) %>%
-      dplyr::filter(master_id %in% input$master_id_dropdown_sinput) %>%
+      dplyr::filter(extract_suffix(master_id) %in% input$master_id_dropdown_sinput) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
         TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
       )) %>%
+      dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id,var_value) %>%
       dplyr::add_count(name = 'N') %>%
       dplyr::group_by(master_id,var_value, right, N) %>%
@@ -633,12 +643,12 @@ server <- function(input, output, session) {
   # create the stacked bar plots or STUDENT's INPUT section for Dropdown type
   output$plot_sinput_dropdown <- renderPlotly({
     
-   
+    
     
     if (all(is.na(plotly_bar_data_dropdown()$var_value))) {
       # If all values in var_value are NA, create a single plot
       plot_ly(plotly_bar_data_dropdown(), x = ~master_id, y = ~percent, color =  ~color_values, marker = list(color = ~color_values,
-                                                                                                               colorscale = list(c(0,1), c("red", "green"))), 
+                                                                                                              colorscale = list(c(0,1), c("red", "green"))), 
               text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                 "<br> Anzahl :", n_i," von ",N,
                 "<br> Proportion :", round(percent,2)),
@@ -651,42 +661,50 @@ server <- function(input, output, session) {
                xaxis = list (title =""))  %>%
         hide_colorbar()  
     } else {
-    
+      
       unique_master_id = unique(plotly_bar_data_dropdown()$master_id)
       
-    plotlylist= list()
-    
-    for( i in 1:length(unique(plotly_bar_data_dropdown()$master_id))){
+      plotlylist= list()
+      
+      for( i in 1:length(unique(plotly_bar_data_dropdown()$master_id))){
+        
+        filtered_data <-plotly_bar_data_dropdown() %>%
+          dplyr::filter(master_id == unique_master_id[i])
+        
+        # Calculate the midpoint of the filtered data for the x-axis
+        x_midpoint <- (length(unique(filtered_data$var_value)) - 1) / 2
+        
+        
+        
+        
+        plotlylist[[i]] = plotly_bar_data_dropdown() %>% 
+          dplyr::filter(master_id == unique_master_id[i]) %>%
+          plot_ly(x = ~var_value, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+                                                                                     colorscale = list(c(0,1), c("red", "green"))), 
+                  text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
+                    "<br> Anzahl :", n_i," von ",N,
+                    "<br> Proportion :", round(percent,2)),
+                  textposition = "none",
+                  hoverinfo = "text") %>%
+          add_bars() %>%
+          layout(barmode = "stack",
+                 showlegend = FALSE,
+                 yaxis = list (title = "Prozent"),
+                 xaxis = list (title = NULL, 
+                               tickvals = ~var_value,
+                               tickangle = 90,
+                               ticktext = ~var_value_trimmed))  %>%
+          hide_colorbar()  %>% add_annotations(text =  unique_master_id[i] ,x =x_midpoint,y=107, showarrow = FALSE)
+        
+        
+        
+        
+      }
       
       
+      subplot(plotlylist, titleX = FALSE, shareY = TRUE)  %>%
+        layout(barmode = 'stack', showlegend = FALSE)
       
-      plotlylist[[i]] = plotly_bar_data_dropdown() %>% 
-        dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~var_value, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
-                                                                                           colorscale = list(c(0,1), c("red", "green"))), 
-                text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
-                  "<br> Anzahl :", n_i," von ",N,
-                  "<br> Proportion :", round(percent,2)),
-                textposition = "none",
-                hoverinfo = "text") %>%
-        add_bars() %>%
-        layout(barmode = "stack",
-               showlegend = FALSE,
-               yaxis = list (title = "Prozent"),
-               xaxis = list (title = NULL, 
-                             tickvals = ~var_value,
-                             ticktext = ~var_value_trimmed))  %>%
-        hide_colorbar()  %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data_dropdown()$var_value)),y=107, showarrow = FALSE)
-      
-      
-      
-      
-    }
-    
-    
-    subplot(plotlylist, titleX = FALSE, shareY = TRUE)  %>%
-      layout(barmode = 'stack', showlegend = FALSE)
-    
     } # end of else
     
   })
@@ -707,11 +725,12 @@ server <- function(input, output, session) {
         modulcode %in% input$module_sinput
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
-      dplyr::filter(master_id %in% input$fillin_options) %>%
+      dplyr::filter(extract_suffix(master_id) %in% input$fillin_options) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
         TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
       )) %>%
+      dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id,feldname) %>%
       dplyr::add_count(name = 'N') %>%
       dplyr::group_by(master_id,feldname, right, N) %>%
@@ -733,6 +752,12 @@ server <- function(input, output, session) {
     
     for( i in 1:length(unique(plotly_bar_data_fillin()$master_id))){
       
+      filtered_data <- plotly_bar_data_fillin() %>%
+        dplyr::filter(master_id == unique_master_id[i])
+      
+      # Calculate the midpoint of the filtered data for the x-axis
+      x_midpoint <- (length(unique(filtered_data$feldname)) - 1) / 2
+      
       
       plotlylist[[i]] = plotly_bar_data_fillin() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
@@ -748,8 +773,9 @@ server <- function(input, output, session) {
                showlegend = FALSE,
                #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
                yaxis = list (title = "Prozent"),
-               xaxis = list (title = NULL)) %>%
-        hide_colorbar()  %>% add_annotations(text =  extract_suffix(unique_master_id[i]) ,x =mean(range(plotly_bar_data_fillin()$feldname)),y=107, showarrow = FALSE)
+               xaxis = list (title = NULL,
+                             tickangle = 90)) %>%
+        hide_colorbar()  %>% add_annotations(text =  unique_master_id[i] ,x =x_midpoint,y=107, showarrow = FALSE)
       #xaxis = list (title = truncate_title(unique_master_id[i])))  
       
       
@@ -859,9 +885,9 @@ server <- function(input, output, session) {
   # Create the data table for the STUDENT'S INPUT section for MC Type
   table_mc_sinput_tab = reactive({
     
-  
     
-     
+    
+    
     
     plotly_bar_data() %>% 
       dplyr::rename('%' = percent) %>%
@@ -870,9 +896,7 @@ server <- function(input, output, session) {
       dplyr::select(-c(color_values,feldinhalt_trimmed)) %>%
       dplyr::select(master_id, feldinhalt, `Result (in%)`,n, `%`, N) %>%
       dplyr::filter(!is.na(feldinhalt)) %>%
-      dplyr::arrange(feldinhalt) %>%
-    dplyr::arrange(master_id) %>%
-    dplyr::arrange(feldinhalt)
+      dplyr::arrange(master_id,feldinhalt, `Result (in%)`)
   })
   
   
@@ -911,8 +935,8 @@ server <- function(input, output, session) {
       dplyr::select(-c(color_values,var_value_trimmed)) %>%
       dplyr::mutate(var_value = unlist(var_value)) %>%
       dplyr::select(master_id, var_value, `Result (in%)`, n, `%`, N) %>%
-      dplyr::arrange(master_id)  %>%
-      dplyr::arrange(var_value)
+      dplyr::arrange(master_id,var_value,`Result (in%)`)  
+    
     
   })
   
@@ -933,7 +957,7 @@ server <- function(input, output, session) {
       )
     ))
   }, class = "display")
-   
+  
   
   
   # Create the data table for the STUDENT'S INPUT section for Fillin Type
@@ -941,7 +965,7 @@ server <- function(input, output, session) {
     
     
     
-  
+    
     
     plotly_bar_data_fillin()%>% 
       #filter(!is.na(var_value)) %>% 
