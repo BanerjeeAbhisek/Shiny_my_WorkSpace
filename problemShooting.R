@@ -145,6 +145,8 @@ server <- function(input, output, session) {
             tabName = "Overall",
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
+              # Dropdown menu for Semester
+              selectizeInput("semester", "Semester", choices = sort(data_overall$Semester), selected = sort(data_overall$Semester)[1] ),
               #Checkbox menu for Module
               checkboxGroupInput("module_overall", "Module", choices = sort(unique(data_overall$modulcode)), selected = sort(unique(data_overall$modulcode))),
               # Dropdown menu for Task Name
@@ -212,7 +214,8 @@ server <- function(input, output, session) {
             tabName = "Sinput",
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
-              # Dropdown menu for Rask Name
+              # Dropdown menu for Semester
+              selectizeInput("semester_sinput", "Semester", choices = sort(data_sinput$Semester)),
               #Checkbox menu for Module
               checkboxGroupInput("module_sinput", "Module", choices = sort(unique(data_sinput$modulcode)), selected = sort(unique(data_sinput$modulcode))),
               # Dropdown menu for Task Name
@@ -260,25 +263,26 @@ server <- function(input, output, session) {
   #observeEvent(input$module_overall, {
   
   #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-  choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$modulcode ==  input$module_overall , 3]))))})
+  choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$modulcode ==  input$module_overall & data_overall$Semester == input$semester , 3]))))})
   
   #updateSelectizeInput(session, "task_name_overall", choices = choices_1())
   #})
   
   
   # Update choices 
-  observeEvent(input$task_name_overall, {
+  observeEvent(c(input$task_name_overall, input$semester), {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-    choices_1 = reactive({c(as.integer(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall, 4]))))}) 
+    choices_1 = reactive({c(as.integer(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall & data_overall$Semester == input$semester, 4]))))}) 
     
     updateSelectizeInput(session, "stage_overall", choices = choices_1())
   })
   
   # Update choices 
-  observeEvent(c(input$task_name_overall, input$stage_overall), {
+  observeEvent(c(input$task_name_overall, input$stage_overall, input$semester), {
     
     choices_1 = reactive({unique(subset(data_overall, 
+                                        Semester == input$semester &
                                         #modulcode == input$module_sinput &
                                         exercise_name == input$task_name_overall & 
                                           stage ==  input$stage_overall )$master_id)}) 
@@ -291,10 +295,10 @@ server <- function(input, output, session) {
   
   
   # Update choices 
-  observeEvent(c(input$module_sinput,input$task_name_sinput), {
+  observeEvent(c(input$module_sinput,input$task_name_sinput, input$semester_sinput), {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-    choices_1 = reactive({c(as.integer(unlist(unique(data_sinput[data_sinput$modulcode == input$module_sinput & data_sinput$exercise_name ==  input$task_name_sinput, 5]))))}) 
+    choices_1 = reactive({c(as.integer(unlist(unique(data_sinput[data_sinput$modulcode == input$module_sinput & data_sinput$exercise_name ==  input$task_name_sinput & data_sinput$Semester == input$semester_sinput, 5]))))}) 
     
     updateSelectizeInput(session, "stage_sinput", choices = choices_1())
   })
@@ -302,10 +306,11 @@ server <- function(input, output, session) {
   
   # Define reactive expression to filter data based on input choices
   filtered_data <- reactive({
-    req(input$module_sinput, input$task_name_sinput, input$stage_sinput)
+    req(input$module_sinput, input$task_name_sinput, input$stage_sinput, input$semester_sinput)
     
     # Filter data based on module_sinput, task_name_sinput, and stage_sinput
     filtered <- c(as.character(unlist(unique(data_sinput[data_sinput$modulcode == input$module_sinput &
+                                                           data_sinput$Semester == input$semester_sinput &
                                                            data_sinput$exercise_name == input$task_name_sinput &
                                                            data_sinput$stage == input$stage_sinput, 3]))))[1]
     
@@ -365,6 +370,8 @@ server <- function(input, output, session) {
       DTOutput('table_mc_sinput')
     } else if (filtered == "Dropdown") {
       DTOutput('table_dropdown_sinput')
+    } else if (filtered == "Fill-In"){
+      DTOutput("table_fillin_sinput")
     } else {
       # Default output if type is not recognized
       plotOutput("invalid_type_message")
@@ -482,6 +489,7 @@ server <- function(input, output, session) {
     
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
+                    Semester== input$semester,
                     stage == input$stage_overall,
                     extract_suffix(master_id) %in% input$master_id_overall ) %>%
       #ämodulcode == input$module_overall) %>%
@@ -527,6 +535,7 @@ server <- function(input, output, session) {
     
     data_sinput %>%
       dplyr::filter(
+        Semester== input$semester_sinput,
         exercise_name == input$task_name_sinput,
         stage == input$stage_sinput,
         modulcode %in% input$module_sinput
@@ -610,6 +619,7 @@ server <- function(input, output, session) {
     
     data_sinput %>%
       dplyr::filter(
+        Semester== input$semester_sinput,
         exercise_name == input$task_name_sinput,
         stage == input$stage_sinput,
         feldname == input$fieldname_sinput_1,
@@ -720,6 +730,7 @@ server <- function(input, output, session) {
     
     data_sinput %>%
       dplyr::filter(
+        Semester== input$semester_sinput,
         exercise_name == input$task_name_sinput,
         stage == input$stage_sinput,
         modulcode %in% input$module_sinput
@@ -1016,15 +1027,29 @@ server <- function(input, output, session) {
   
   
   
-  # Create heading for histogram for OVERALL section 
+  # Create heading for histogram for OVERALL section - versions not selected
   output$plot_overall_title <- renderUI({
     
-    title_text = paste_fun(input$task_name_overall,input$stage_overall)
+    title_text = paste( paste_fun(input$task_name_overall,input$stage_overall),"Total =", sum(default_table_overall()$Anzahl) )
     h4(title_text)  
   })
   
-  # Create heading for data table for OVERALL section
+  # Create heading for data table for OVERALL section - versions not selected
   output$table_overall_title <- renderUI({
+    
+    title_text  = paste_fun(input$task_name_overall,input$stage_overall) 
+    h4(title_text)  
+  })
+  
+  # Create heading for histogram for OVERALL section - versions  selected
+  output$plot_overall_title_version <- renderUI({
+    
+    title_text = paste(paste_fun(input$task_name_overall,input$stage_overall),"Total =", sum(default_table_overall_versions()$Anzahl))
+    h4(title_text)  
+  })
+  
+  # Create heading for data table for OVERALL section - versions  selected
+  output$table_overall_title_version <- renderUI({
     
     title_text  = paste_fun(input$task_name_overall,input$stage_overall) 
     h4(title_text)  
