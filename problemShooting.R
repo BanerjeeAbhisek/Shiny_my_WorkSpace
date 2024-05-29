@@ -990,7 +990,7 @@ server <- function(input, output, session) {
     
   })
   
-  
+   
   
   # Present the table for the STUDENT'S INPUT section for Fillin Type
   output$table_fillin_sinput <- renderDT({
