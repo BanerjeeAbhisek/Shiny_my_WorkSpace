@@ -1,6 +1,3 @@
-
-
-
 # Sources the packages used
 source(here::here("packages.R"))
 
@@ -17,8 +14,7 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two") 
 )
 
-
-
+# truncate labels
 truncate_and_wrap <- function(x, width = 25, max_chars = 30) {
   if (is.na(x)) {
     return("")
@@ -32,7 +28,6 @@ truncate_and_wrap <- function(x, width = 25, max_chars = 30) {
     
   }
 }
-
 
 # Make a common function for the paste
 paste_fun <- function(task, stage){ return(paste("Aufgabe:", task, " - Stage: ", stage)) }
@@ -66,6 +61,10 @@ extract_suffix <- function(master_id) {
   return(suffix)
 }
 
+extract_suffix <- function(master_id) {
+  suffix <- gsub("^.*_(\\w+_\\d+)$", "\\1", master_id)
+  return(suffix)
+}
 
 
 
@@ -75,27 +74,18 @@ extract_suffix <- function(master_id) {
 
 
 
-
-
-
-
+# Example data
 m = c("ZAN71000","ZAN71004")
 t = "02 Bildungsbenachteiligung"
 s = 1
 
 
-dt =data_sinput %>%
+dt <- data_sinput %>%
   dplyr::filter(modulcode %in% m,
                 exercise_name == t,
                 stage == s
   )
 
-
-
-extract_suffix <- function(master_id) {
-  suffix <- gsub("^.*_(\\w+_\\d+)$", "\\1", master_id)
-  return(suffix)
-}
 
 
 mc = unique(extract_suffix(dt$master_id))
@@ -169,3 +159,70 @@ for( i in 1:length(unique(final_do$master_id))){
 
 subplot(plotlylist, titleX = FALSE, shareY = TRUE)  %>%
   layout(barmode = 'stack', showlegend = FALSE)
+
+
+
+
+#### sub plot try
+i = 1
+
+final_do %>% 
+  dplyr::filter(master_id == unique_master_id[i]) %>%
+  plot_ly(x = ~feldinhalt, y = ~percent, color = ~color_values, 
+          marker = list(color = ~color_values,
+                        colorscale = list(c(0,1), c("red", "green"))), 
+          text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
+            "<br> Anzahl :", n_i," von ",N,
+            "<br> Proportion :", round(percent,2)),
+          textposition = "none",
+          hoverinfo = "text") %>%
+  add_bars() %>%
+  layout(barmode = "stack",
+         showlegend = FALSE,
+         #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
+         yaxis = list (title = "Prozent"),
+         xaxis = list (title =NULL, 
+                       tickvals = ~feldinhalt,
+                       tickangle = 90,
+                       ticktext = ~feldinhalt_trimmed)) %>%
+  hide_colorbar() %>% add_annotations(text =  unique_master_id[i] ,x = x_midpoint,y=107, showarrow = FALSE)
+
+final_do %>%
+  dplyr::filter(master_id == unique_master_id[i]) %>%
+  plot_ly(x = ~feldinhalt, y = ~percent, color = ~right,
+          colors = ~colour,
+          text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
+            "<br> Anzahl :", n_i," von ",N,
+            "<br> Proportion :", round(percent,2)),
+          textposition = "none",
+          hoverinfo = "text") %>%
+  add_bars() %>%
+  layout(barmode = "stack",
+       showlegend = FALSE,
+       #xaxis = list(title = paste(unique_feldinhalt[i]), tickangle = 45),
+       yaxis = list (title = "Prozent"),
+       xaxis = list (title =NULL, 
+                     tickvals = ~feldinhalt,
+                     tickangle = 90,
+                     ticktext = ~feldinhalt_trimmed)) %>%
+  hide_colorbar() %>% add_annotations(text =  unique_master_id[i] ,x = x_midpoint,y=107, showarrow = FALSE)
+
+
+
+## colorpalett
+
+green_pal <- colorRampPalette(c("lawngreen", "green4"))
+red_pal <- colorRampPalette(c("red", "coral"))
+
+color_df <- tibble::tibble(
+  right = as.character(0:100),
+  colour = c(red_pal(51),
+             green_pal(50))
+)
+
+# add colours to the df
+
+final_do <- final_do %>%
+  dplyr::left_join(color_df, 
+                   by = 'right')
+  
