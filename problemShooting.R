@@ -267,7 +267,7 @@ server <- function(input, output, session) {
   
   #updateSelectizeInput(session, "task_name_overall", choices = choices_1())
   #})
-  
+   
   
   # Update choices 
   observeEvent(c(input$task_name_overall, input$semester), {

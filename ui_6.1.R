@@ -60,7 +60,7 @@ ui <- dashboardPage(
                    height = 200, # Set the height in pixels
                    #offset = 500, 
                    # Overall punkte plot
-                   TOutput('table_output_overall')
+                   DTOutput('table_output_overall')
                    # Add more UI elements as needed
                  )#End of Box
           )#End of column
