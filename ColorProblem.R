@@ -68,9 +68,18 @@ extract_suffix <- function(master_id) {
 
 
 
-
-
-
+green_pal <- colorRampPalette(c("lawngreen", "green4"))
+red_pal <- colorRampPalette(c("red", "coral"))
+color_df <- tibble::tibble(
+  color_value = as.character(0:100),
+  colour = c(red_pal(51),
+             green_pal(50))
+)
+data_sinput_1 <- data_sinput %>%
+  mutate(color_value = as.character(points_individual))
+data_sinput_1 <- data_sinput_1 %>%
+  dplyr::left_join(color_df,
+                   by = 'color_value')
 
 
 
@@ -91,7 +100,7 @@ dt <- data_sinput %>%
 mc = unique(extract_suffix(dt$master_id))
 
 
-final_do =data_sinput %>%
+final_do =data_sinput_1 %>%
   dplyr::filter(modulcode %in% m,
                 exercise_name == t,
                 stage == s
@@ -106,12 +115,11 @@ final_do =data_sinput %>%
   dplyr::mutate(master_id = extract_suffix(master_id))%>%
   dplyr::group_by(master_id,feldinhalt) %>%
   dplyr::add_count(name = 'N') %>%
-  dplyr::group_by(master_id,feldinhalt, right, N) %>%
+  dplyr::group_by(master_id,feldinhalt, right, N,colour) %>%
   dplyr::count(name = 'n_i') %>%
   #   dplyr::arrange(feldinhalt, desc(right)) %>%
   dplyr::mutate(percent = round(n_i/N*100,2)) %>%
-  dplyr::mutate(feldinhalt_trimmed = truncate_and_wrap(feldinhalt))%>%
-  dplyr::mutate(color_values =as.numeric(right) / 100)
+  dplyr::mutate(feldinhalt_trimmed = truncate_and_wrap(feldinhalt))
 
 
 
@@ -135,8 +143,7 @@ for( i in 1:length(unique(final_do$master_id))){
   
   plotlylist[[i]] = final_do %>% 
     dplyr::filter(master_id == unique_master_id[i]) %>%
-    plot_ly(x = ~feldinhalt, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
-                                                                                colorscale = list(c(0,1), c("red", "green"))), 
+    plot_ly(x = ~feldinhalt, y = ~percent, color = ~right, colors = ~colour , 
             text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
               "<br> Anzahl :", n_i," von ",N,
               "<br> Proportion :", round(percent,2)),
