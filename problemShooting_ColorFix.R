@@ -145,8 +145,8 @@ server <- function(input, output, session) {
       # Dashboard Sidebar
       dashboardSidebar(
         sidebarMenu(
-          menuItem("Stages", tabName = "Overall"),
-          menuItem("Eingabefelder", tabName = "Sinput")
+          menuItem("Aufgabe", tabName = "Overall"),
+          menuItem("Antwortanalyse", tabName = "Sinput")
         )
       ), # end of dashboardSidebar
       # dashboard Body
@@ -165,9 +165,9 @@ server <- function(input, output, session) {
               # Dropdown menu for Task Name
               selectizeInput("task_name_overall", "Aufgabe", choices = c(' ', sort(unique(data_overall$exercise_name)))),
               # Dropdown menu for Stage
-              selectizeInput("stage_overall", "Stage", choices = NULL),
+              selectizeInput("stage_overall", "Aufgabenteil", choices = NULL),
               # Radio button for versions
-              radioButtons("version_button", "Version", choices = c("Yes","No"), selected = "No", inline = TRUE),
+              radioButtons("version_button", "Nach Varianten differenzieren?", choices = c("Yes","No"), selected = "No", inline = TRUE),
               
               conditionalPanel(
                 condition = "input.version_button == 'Yes'",
