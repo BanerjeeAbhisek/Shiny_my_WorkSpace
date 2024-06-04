@@ -159,7 +159,7 @@ server <- function(input, output, session) {
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
               # Dropdown menu for Semester
-              selectizeInput("semester", "Semester", choices = sort(data_overall$Semester), selected = sort(data_overall$Semester)[1] ),
+              checkboxGroupInput("semester", "Semester", choices = unique(data_overall$Semester), selected = unique(data_overall$Semester) ),
               #Checkbox menu for Module
               checkboxGroupInput("module_overall", "Module", choices = sort(unique(data_overall$modulcode)), selected = sort(unique(data_overall$modulcode))),
               # Dropdown menu for Task Name
@@ -228,7 +228,7 @@ server <- function(input, output, session) {
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
               # Dropdown menu for Semester
-              selectizeInput("semester_sinput", "Semester", choices = sort(data_sinput$Semester)),
+              checkboxGroupInput("semester_sinput", "Semester", choices =unique(data_sinput$Semester), selected = unique(data_sinput$Semester)),
               #Checkbox menu for Module
               checkboxGroupInput("module_sinput", "Module", choices = sort(unique(data_sinput$modulcode)), selected = sort(unique(data_sinput$modulcode))),
               # Dropdown menu for Task Name
@@ -747,6 +747,7 @@ server <- function(input, output, session) {
         modulcode %in% input$module_sinput
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
+      dplyr::filter(!is.na(points_individual)) %>%
       dplyr::filter(extract_suffix(master_id) %in% input$fillin_options) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
