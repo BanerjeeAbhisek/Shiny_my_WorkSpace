@@ -234,7 +234,7 @@ server <- function(input, output, session) {
               # Dropdown menu for Task Name
               selectizeInput("task_name_sinput", "Aufgabe", choices = sort(unique(data_sinput$exercise_name))),
               # Dropdown menu for Stage
-              selectizeInput("stage_sinput", "Stage", choices = NULL),
+              selectizeInput("stage_sinput", "Aufgabenteil", choices = NULL),
               # Conditional input based on filtered data
               uiOutput("conditional_input")
               
