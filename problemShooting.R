@@ -49,6 +49,19 @@ extract_suffix <- function(master_id) {
 }
 
 
+# Make a column for the colors
+green_pal <- colorRampPalette(c("lawngreen", "green4"))
+red_pal <- colorRampPalette(c("red", "coral"))
+color_df <- tibble::tibble(
+  color_value = as.character(0:100),
+  colour = c(red_pal(51),
+             green_pal(50))
+)
+data_sinput <- data_sinput %>%
+  mutate(color_value = as.character(points_individual))
+data_sinput <- data_sinput %>%
+  dplyr::left_join(color_df,
+                   by = 'color_value')
 
 ######################################################
 #####                   UI                       ##### 
@@ -132,8 +145,8 @@ server <- function(input, output, session) {
       # Dashboard Sidebar
       dashboardSidebar(
         sidebarMenu(
-          menuItem("Stages", tabName = "Overall"),
-          menuItem("Eingabefelder", tabName = "Sinput")
+          menuItem("Aufgabe", tabName = "Overall"),
+          menuItem("Antwortanalyse", tabName = "Sinput")
         )
       ), # end of dashboardSidebar
       # dashboard Body
@@ -146,15 +159,15 @@ server <- function(input, output, session) {
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
               # Dropdown menu for Semester
-              selectizeInput("semester", "Semester", choices = sort(data_overall$Semester), selected = sort(data_overall$Semester)[1] ),
+              checkboxGroupInput("semester", "Semester", choices = unique(data_overall$Semester), selected = unique(data_overall$Semester) ),
               #Checkbox menu for Module
               checkboxGroupInput("module_overall", "Module", choices = sort(unique(data_overall$modulcode)), selected = sort(unique(data_overall$modulcode))),
               # Dropdown menu for Task Name
               selectizeInput("task_name_overall", "Aufgabe", choices = c(' ', sort(unique(data_overall$exercise_name)))),
               # Dropdown menu for Stage
-              selectizeInput("stage_overall", "Stage", choices = NULL),
+              selectizeInput("stage_overall", "Aufgabenteil", choices = NULL),
               # Radio button for versions
-              radioButtons("version_button", "Version", choices = c("Yes","No"), selected = "No", inline = TRUE),
+              radioButtons("version_button", "Nach Varianten differenzieren?", choices = c("Yes","No"), selected = "No", inline = TRUE),
               
               conditionalPanel(
                 condition = "input.version_button == 'Yes'",
@@ -215,7 +228,7 @@ server <- function(input, output, session) {
             dashboardControlbar(
               width = 250,  # Adjust the width as needed
               # Dropdown menu for Semester
-              selectizeInput("semester_sinput", "Semester", choices = sort(data_sinput$Semester)),
+              checkboxGroupInput("semester_sinput", "Semester", choices =unique(data_sinput$Semester), selected = unique(data_sinput$Semester)),
               #Checkbox menu for Module
               checkboxGroupInput("module_sinput", "Module", choices = sort(unique(data_sinput$modulcode)), selected = sort(unique(data_sinput$modulcode))),
               # Dropdown menu for Task Name
@@ -263,26 +276,26 @@ server <- function(input, output, session) {
   #observeEvent(input$module_overall, {
   
   #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-  choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$modulcode ==  input$module_overall & data_overall$Semester == input$semester , 3]))))})
+  choices_1 = reactive({c(as.character(unlist(unique(data_overall[data_overall$modulcode ==  input$module_overall  , 3]))))})
   
   #updateSelectizeInput(session, "task_name_overall", choices = choices_1())
   #})
-   
+  
   
   # Update choices 
-  observeEvent(c(input$task_name_overall, input$semester), {
+  observeEvent(c(input$task_name_overall), {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-    choices_1 = reactive({c(as.integer(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall & data_overall$Semester == input$semester, 4]))))}) 
+    choices_1 = reactive({c(as.integer(unlist(unique(data_overall[data_overall$exercise_name ==  input$task_name_overall , 4]))))}) 
     
     updateSelectizeInput(session, "stage_overall", choices = choices_1())
   })
   
   # Update choices 
-  observeEvent(c(input$task_name_overall, input$stage_overall, input$semester), {
+  observeEvent(c(input$task_name_overall, input$stage_overall), {
     
     choices_1 = reactive({unique(subset(data_overall, 
-                                        Semester == input$semester &
+                                        
                                         #modulcode == input$module_sinput &
                                         exercise_name == input$task_name_overall & 
                                           stage ==  input$stage_overall )$master_id)}) 
@@ -298,7 +311,7 @@ server <- function(input, output, session) {
   observeEvent(c(input$module_sinput,input$task_name_sinput, input$semester_sinput), {
     
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
-    choices_1 = reactive({c(as.integer(unlist(unique(data_sinput[data_sinput$modulcode == input$module_sinput & data_sinput$exercise_name ==  input$task_name_sinput & data_sinput$Semester == input$semester_sinput, 5]))))}) 
+    choices_1 = reactive({c(as.integer(unlist(unique(data_sinput[ data_sinput$exercise_name ==  input$task_name_sinput, 5]))))}) 
     
     updateSelectizeInput(session, "stage_sinput", choices = choices_1())
   })
@@ -309,10 +322,10 @@ server <- function(input, output, session) {
     req(input$module_sinput, input$task_name_sinput, input$stage_sinput, input$semester_sinput)
     
     # Filter data based on module_sinput, task_name_sinput, and stage_sinput
-    filtered <- c(as.character(unlist(unique(data_sinput[data_sinput$modulcode == input$module_sinput &
-                                                           data_sinput$Semester == input$semester_sinput &
-                                                           data_sinput$exercise_name == input$task_name_sinput &
-                                                           data_sinput$stage == input$stage_sinput, 3]))))[1]
+    filtered <- c(as.character(unlist(unique(data_sinput[
+      
+      data_sinput$exercise_name == input$task_name_sinput &
+        data_sinput$stage == input$stage_sinput, 3]))))[1]
     
     
     
@@ -387,9 +400,9 @@ server <- function(input, output, session) {
     #choices_1 = reactive({c(unique(data_overall[data_overall$exercise_name == input$task_name_overall, 4]))}) 
     choices_1 = reactive({unique(subset(data_sinput,
                                         !is.na(master_id) &
-                                          modulcode == input$module_sinput &
+                                          modulcode %in% input$module_sinput &
                                           exercise_name == input$task_name_sinput & 
-                                          stage ==  input$stage_sinput )$master_id)}) 
+                                          stage %in% input$stage_sinput )$master_id)}) 
     
     updateCheckboxGroupInput(session, "mc_options", choices = sort(extract_suffix(choices_1())), selected = extract_suffix(choices_1()))
   })
@@ -452,7 +465,8 @@ server <- function(input, output, session) {
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
                     stage == input$stage_overall,
-                    modulcode %in% input$module_overall) 
+                    modulcode %in% input$module_overall,
+                    Semester %in% input$semester) 
   })
   
   # Create the histogram for the OVERALL tab when versions are not selected
@@ -489,7 +503,7 @@ server <- function(input, output, session) {
     
     data_overall %>%
       dplyr::filter(exercise_name == input$task_name_overall,
-                    Semester== input$semester,
+                    Semester  %in% input$semester,
                     stage == input$stage_overall,
                     extract_suffix(master_id) %in% input$master_id_overall ) %>%
       #ämodulcode == input$module_overall) %>%
@@ -535,7 +549,7 @@ server <- function(input, output, session) {
     
     data_sinput %>%
       dplyr::filter(
-        Semester== input$semester_sinput,
+        Semester  %in% input$semester_sinput,
         exercise_name == input$task_name_sinput,
         stage == input$stage_sinput,
         modulcode %in% input$module_sinput
@@ -550,7 +564,7 @@ server <- function(input, output, session) {
       dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id,feldinhalt) %>%
       dplyr::add_count(name = 'N') %>%
-      dplyr::group_by(master_id,feldinhalt, right, N) %>%
+      dplyr::group_by(master_id,feldinhalt, right, N,colour) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
       dplyr::mutate(percent = round(n_i/N*100,2)) %>%
@@ -579,8 +593,7 @@ server <- function(input, output, session) {
       
       plotlylist[[i]] = plotly_bar_data() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~feldinhalt, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
-                                                                                    colorscale = list(c(0,1), c("red", "green"))), 
+        plot_ly(x = ~feldinhalt, y = ~percent, color = ~right, colors = ~colour , 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                   "<br> Anzahl :", n_i," von ",N,
                   "<br> Proportion :", round(percent,2)),
@@ -619,7 +632,7 @@ server <- function(input, output, session) {
     
     data_sinput %>%
       dplyr::filter(
-        Semester== input$semester_sinput,
+        Semester  %in% input$semester_sinput,
         exercise_name == input$task_name_sinput,
         stage == input$stage_sinput,
         feldname == input$fieldname_sinput_1,
@@ -635,7 +648,7 @@ server <- function(input, output, session) {
       dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id,var_value) %>%
       dplyr::add_count(name = 'N') %>%
-      dplyr::group_by(master_id,var_value, right, N) %>%
+      dplyr::group_by(master_id,var_value, right, N, colour) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
       dplyr::mutate(percent = round(n_i/N*100,2)) %>%
@@ -643,7 +656,7 @@ server <- function(input, output, session) {
       dplyr::mutate(var_value_trimmed = truncate_and_wrap(var_value))%>%
       dplyr::ungroup() %>%
       dplyr::mutate(right = as.numeric(right)) %>%
-      dplyr::select(master_id, var_value, N,right,  n_i, percent, var_value_trimmed)%>%
+      dplyr::select(master_id, var_value, N,right,  n_i, percent, var_value_trimmed, colour)%>%
       dplyr::mutate(color_values =as.numeric(right) / 100)%>%
       dplyr::arrange(right)  %>%
       distinct() 
@@ -657,8 +670,7 @@ server <- function(input, output, session) {
     
     if (all(is.na(plotly_bar_data_dropdown()$var_value))) {
       # If all values in var_value are NA, create a single plot
-      plot_ly(plotly_bar_data_dropdown(), x = ~master_id, y = ~percent, color =  ~color_values, marker = list(color = ~color_values,
-                                                                                                              colorscale = list(c(0,1), c("red", "green"))), 
+      plot_ly(plotly_bar_data_dropdown(), x = ~master_id, y = ~percent, color = ~right, colors = ~colour ,  
               text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                 "<br> Anzahl :", n_i," von ",N,
                 "<br> Proportion :", round(percent,2)),
@@ -730,12 +742,13 @@ server <- function(input, output, session) {
     
     data_sinput %>%
       dplyr::filter(
-        Semester== input$semester_sinput,
+        Semester  %in% input$semester_sinput,
         exercise_name == input$task_name_sinput,
         stage == input$stage_sinput,
         modulcode %in% input$module_sinput
       ) %>%
       dplyr::filter(!is.na(master_id)) %>%
+      dplyr::filter(!is.na(points_individual)) %>%
       dplyr::filter(extract_suffix(master_id) %in% input$fillin_options) %>%
       dplyr::mutate(right = dplyr::case_when(
         points_individual == 100 ~ '100',
@@ -744,7 +757,7 @@ server <- function(input, output, session) {
       dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id,feldname) %>%
       dplyr::add_count(name = 'N') %>%
-      dplyr::group_by(master_id,feldname, right, N) %>%
+      dplyr::group_by(master_id,feldname, right, N, colour) %>%
       dplyr::count(name = 'n_i') %>%
       #   dplyr::arrange(feldinhalt, desc(right)) %>%
       dplyr::mutate(percent = round(n_i/N*100,2)) %>%
@@ -772,8 +785,7 @@ server <- function(input, output, session) {
       
       plotlylist[[i]] = plotly_bar_data_fillin() %>% 
         dplyr::filter(master_id == unique_master_id[i]) %>%
-        plot_ly(x = ~feldname, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
-                                                                                  colorscale = list(c(0,1), c("red", "green"))), 
+        plot_ly(x = ~feldname, y = ~percent, color = ~right, colors = ~colour , 
                 text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                   "<br> Anzahl :", n_i," von ",N,
                   "<br> Proportion :", round(percent,2)),
@@ -901,10 +913,11 @@ server <- function(input, output, session) {
     
     
     plotly_bar_data() %>% 
+      ungroup() %>%
       dplyr::rename('%' = percent) %>%
       dplyr::rename("Result (in%)" = right) %>%
       dplyr::rename("n" = n_i) %>%
-      dplyr::select(-c(color_values,feldinhalt_trimmed)) %>%
+      dplyr::select(-c(colour,color_values,feldinhalt_trimmed)) %>%
       dplyr::select(master_id, feldinhalt, `Result (in%)`,n, `%`, N) %>%
       dplyr::filter(!is.na(feldinhalt)) %>%
       dplyr::arrange(master_id,feldinhalt, `Result (in%)`)
@@ -939,11 +952,11 @@ server <- function(input, output, session) {
     
     
     plotly_bar_data_dropdown() %>% 
-      #filter(!is.na(var_value)) %>% 
+      ungroup() %>%
       dplyr::rename('%' = percent) %>%
       dplyr::rename("Result (in%)" = right) %>%
       dplyr::rename("n" = n_i) %>%
-      dplyr::select(-c(color_values,var_value_trimmed)) %>%
+      dplyr::select(-c(colour,color_values,var_value_trimmed)) %>%
       dplyr::mutate(var_value = unlist(var_value)) %>%
       dplyr::select(master_id, var_value, `Result (in%)`, n, `%`, N) %>%
       dplyr::arrange(master_id,var_value,`Result (in%)`)  
@@ -979,18 +992,18 @@ server <- function(input, output, session) {
     
     
     plotly_bar_data_fillin()%>% 
-      #filter(!is.na(var_value)) %>% 
+      ungroup() %>%
       dplyr::rename('%' = percent) %>%
       dplyr::rename("Result (in%)" = right) %>%
       dplyr::rename("n" = n_i) %>%
-      dplyr::select(-c(color_values)) %>%
+      dplyr::select(-c(colour,color_values)) %>%
       dplyr::select(master_id, feldname, `Result (in%)`, n, `%`, N) %>%
       dplyr::arrange(master_id) %>%
       dplyr::arrange(feldname)
     
   })
   
-   
+  
   
   # Present the table for the STUDENT'S INPUT section for Fillin Type
   output$table_fillin_sinput <- renderDT({
