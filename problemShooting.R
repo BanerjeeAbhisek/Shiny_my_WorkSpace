@@ -14,15 +14,23 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two") 
 )
 
+# Make color fun
+get_color_fun <- function(data, ...){
+  return(
+    data %>%
+      dplyr::ungroup() %>%
+      dplyr::distinct(points_individual, colour) %>% 
+      dplyr::arrange(points_individual) %>%
+      pull()
+  )
+}
 
 
 # Make a common function for the paste
 paste_fun <- function(task, stage){ return(paste("Aufgabe:", task, " - Stage: ", stage)) }
 # Make a function for wrapping texts
 truncate_and_wrap <- function(x, width = 20, max_chars = 30) {
-  if (is.na(x)) {
-    return("")
-  } else if (nchar(x) <= max_chars) {
+  if (nchar(x) <= max_chars) {
     return(x)
   } else {
     # Truncate to the first 18 characters
@@ -62,6 +70,11 @@ data_sinput <- data_sinput %>%
 data_sinput <- data_sinput %>%
   dplyr::left_join(color_df,
                    by = 'color_value')
+
+#Dealing with NULL
+data_sinput <- data_sinput %>%
+  mutate(var_value = map(var_value, ~ if(is.null(.)) NA else .))
+
 
 ######################################################
 #####                   UI                       ##### 
@@ -232,7 +245,7 @@ server <- function(input, output, session) {
               #Checkbox menu for Module
               checkboxGroupInput("module_sinput", "Module", choices = sort(unique(data_sinput$modulcode)), selected = sort(unique(data_sinput$modulcode))),
               # Dropdown menu for Task Name
-              selectizeInput("task_name_sinput", "Aufgabe", choices = sort(unique(data_sinput$exercise_name))),
+              selectizeInput("task_name_sinput", "Aufgabe", choices = c(' ', sort(unique(data_sinput$exercise_name)))),
               # Dropdown menu for Stage
               selectizeInput("stage_sinput", "Aufgabenteil", choices = NULL),
               # Conditional input based on filtered data
@@ -578,6 +591,8 @@ server <- function(input, output, session) {
   # create the stacked bar plots or STUDENT's INPUT section for MC type
   output$plot_sinput_mc <- renderPlotly({
     
+    
+    
     unique_master_id = unique(plotly_bar_data()$master_id)
     
     plotlylist= list()
@@ -646,7 +661,7 @@ server <- function(input, output, session) {
         TRUE ~ as.character(points_individual) # Assign the unique values as factor levels
       )) %>%
       dplyr::mutate(master_id = extract_suffix(master_id))%>%
-      dplyr::group_by(master_id,var_value) %>%
+      dplyr::group_by(master_id,var_value,feldname) %>%
       dplyr::add_count(name = 'N') %>%
       dplyr::group_by(master_id,var_value, right, N, colour) %>%
       dplyr::count(name = 'n_i') %>%
@@ -656,7 +671,7 @@ server <- function(input, output, session) {
       dplyr::mutate(var_value_trimmed = truncate_and_wrap(var_value))%>%
       dplyr::ungroup() %>%
       dplyr::mutate(right = as.numeric(right)) %>%
-      dplyr::select(master_id, var_value, N,right,  n_i, percent, var_value_trimmed, colour)%>%
+      dplyr::select(master_id, var_value, N,right,  n_i, percent, var_value_trimmed, colour )%>%
       dplyr::mutate(color_values =as.numeric(right) / 100)%>%
       dplyr::arrange(right)  %>%
       distinct() 
@@ -669,8 +684,11 @@ server <- function(input, output, session) {
     
     
     if (all(is.na(plotly_bar_data_dropdown()$var_value))) {
+      
+      
       # If all values in var_value are NA, create a single plot
-      plot_ly(plotly_bar_data_dropdown(), x = ~master_id, y = ~percent, color = ~right, colors = ~colour ,  
+      plot_ly(plotly_bar_data_dropdown(), x = ~master_id, y = ~percent, color = ~color_values, marker = list(color = ~color_values,
+                                                                                                            colorscale = list(c(0,1), c("red", "green"))), 
               text = ~paste(#"Feldinhalt :", ~feldinhalt_trimmed,
                 "<br> Anzahl :", n_i," von ",N,
                 "<br> Proportion :", round(percent,2)),
@@ -680,7 +698,7 @@ server <- function(input, output, session) {
         layout(barmode = "stack",
                showlegend = FALSE,
                yaxis = list (title = "Prozent"),
-               xaxis = list (title =""))  %>%
+               xaxis = list (title ="",side = "top"))  %>%
         hide_colorbar()  
     } else {
       
@@ -769,6 +787,8 @@ server <- function(input, output, session) {
   
   # create the stacked bar plots or STUDENT's INPUT section for Fill-In type
   output$plot_sinput_fillin <- renderPlotly({
+    
+    
     
     unique_master_id = unique(plotly_bar_data_fillin()$master_id)
     

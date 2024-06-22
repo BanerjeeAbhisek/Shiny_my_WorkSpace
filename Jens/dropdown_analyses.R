@@ -1,5 +1,5 @@
 source("packages.R")
-source("functions.R")
+source(("functions.R"))
 
 # load and modify the data
 load("data_overall.RData")
