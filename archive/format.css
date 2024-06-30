@@ -85,12 +85,9 @@ a {
     border-radius: 1px;
     right: -300px;
     width: 265px;
-    -webkit-transition: -webkit-transform .3s ease-in-out,width .3s ease-in-out;
-    -moz-transition: -moz-transform .3s ease-in-out,width .3s ease-in-out;
-    -o-transition: -o-transform .3s ease-in-out,width .3s ease-in-out;
-/*    -webkit-transition: right 0.3s ease-in-out;
-    -o-transition: right 0.3s ease-in-out; 
-    transition: right 0.3s ease-in-out;*/
+    -webkit-transition: right 0.3s ease-in-out;
+    -o-transition: right 0.3s ease-in-out;
+    transition: right 0.3s ease-in-out;
 }
 
 
@@ -113,7 +110,7 @@ a {
 
 body {
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.42857143;
     color: #fff;
     background-color: #fff;
@@ -158,6 +155,16 @@ table.dataTable.row-border > tbody > tr > th, table.dataTable.row-border > tbody
   color: #000000 !important;
 }
 
+/*
+.own_h {
+  font-size: 24px;
+  background-image: url('https://www.uni-due.de/imperia/md/images/offen_im_denken/signet_ude_rgb_neg.png');
+  background-repeat: no-repeat;
+  background-size: 50px;
+  background-position: 10px 0%;
+}
+*/
+
 .logo {
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
   font-weight: bold;
@@ -188,39 +195,3 @@ a.login:hover {
     position: relative;
 }
 */
-
-footer {
-    height: 50px;
-    background:  #004c93;
-    text-align: center;
-    padding:20px 50px 50px 10px; 
-    font-size:14px;
-}
-
-.box-title > h3, h4 {
-  font-size: 14px !important;
-  font-weight: bold;
-}
-
-.box-header{
-  padding-left: 10px;
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  padding-right: 10px;
-}
-
-/*div.dt-buttons>.dt-button, div.dt-buttons>div.dt-button-split */
-.dt-button {
-  color: #ffffff !important;
-  border-radius: 2px !important;
-  font-size: .75em !important;
-  background: #004c93 !important;
-
-.dt-button:hover {
-  background-color: #ffffff !important; /* #ff3232; */
-  border-color: #004c93 !important;
-  font-weight: bold !important;
-  font-size: 1em !important;
-  color: #004c93 !important;
-  padding: 5px !important;
-}

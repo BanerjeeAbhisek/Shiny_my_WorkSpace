@@ -1,7 +1,7 @@
 # write
 user_base <- tibble::tibble(
-  user = c("user11", 'jens.klenke', 'minh.salzmann-hoang', 'thomas.kania'),
-  password = sapply(c('pass11', 'Cax3x9?oCu', 'crig0FAg_*', 'tH2Nich!PH'), 
+  user = c("admin", 'jens.klenke', 'minh.salzmann-hoang', 'thomas.kania'),
+  password = sapply(c('Xu4rOfa*Re', 'Cax3x9?oCu', 'crig0FAg_*', 'tH2Nich!PH'), 
                     sodium::password_store),
   permissions = c("admin", "admin", "standard", "standard"),
   name = c("User One", "User Two", "User Three", "User Four"), 
