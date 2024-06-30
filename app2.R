@@ -486,7 +486,7 @@ server <- function(input, output, session) {
     
     antwortanalyse_data() %>%
       dplyr::filter(!is.na(master_id)) %>%
-      #dplyr::filter(!is.na(feldinhalt)) %>%
+      dplyr::filter(!is.na(feldinhalt)) %>%
       dplyr::filter(extract_suffix(master_id) %in% input$mc_options) %>%
       dplyr::mutate(master_id = extract_suffix(master_id))%>%
       dplyr::group_by(master_id, feldinhalt) %>%
