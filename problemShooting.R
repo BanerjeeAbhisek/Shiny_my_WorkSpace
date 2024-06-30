@@ -30,7 +30,9 @@ get_color_fun <- function(data, ...){
 paste_fun <- function(task, stage){ return(paste("Aufgabe:", task, " - Stage: ", stage)) }
 # Make a function for wrapping texts
 truncate_and_wrap <- function(x, width = 20, max_chars = 30) {
-  if (nchar(x) <= max_chars) {
+  if (is.na(x)) {
+    return("")
+  } else if (nchar(x) <= max_chars) {
     return(x)
   } else {
     # Truncate to the first 18 characters
@@ -49,6 +51,8 @@ truncate_and_wrap <- function(x, width = 20, max_chars = 30) {
     return(truncated_label)
   }
 }
+
+
 
 # Make a common function for trimming master id
 extract_suffix <- function(master_id) {
