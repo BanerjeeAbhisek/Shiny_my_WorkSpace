@@ -191,16 +191,66 @@ wrap_plot <- function(data, x, type){
     
     # plotting
     plot <- plot_fun(new_data)
+    ## data wrangling
+    new_data <- data %>%
+      dplyr::arrange({{x}}) %>%
+      dplyr::rename('x_label' = {{x}}) %>%
+      dplyr::rename('x_label_trimmed' = paste0({{x}}, '_trimmed'))
   }
   
   # Dropdown Stage
   if(type == 'Dropdown'){
-    plot <- 'Dropdown'
+    ## data wrangling
+    if (!all(is.na(data$var_value))){
+    new_data <- data %>%
+      dplyr::arrange({{x}}) %>%
+      dplyr::rename('x_label' = {{x}}) %>%
+      dplyr::rename('x_label_trimmed' = paste0({{x}}, '_trimmed'))
+    
+    # plotting
+    plot <- plot_fun(new_data)
+    ## data wrangling
+    new_data <- data %>%
+      dplyr::arrange({{x}}) %>%
+      dplyr::rename('x_label' = {{x}}) %>%
+      dplyr::rename('x_label_trimmed' = paste0({{x}}, '_trimmed'))
+    } else {
+      
+      x = "master_id"
+      new_data <- data %>%
+        dplyr::arrange({{x}}) %>%
+        dplyr::rename('x_label' = {{x}})
+      
+      filtered_data <- new_data %>%
+        dplyr::arrange(x_label)
+      
+      
+      plot = plot_ly(data, x = ~master_id, y = ~percent, color = ~points_individual, 
+              colors = get_color_fun(filtered_data)) %>%
+        add_bars() %>%
+        layout(barmode = "stack",
+               showlegend = FALSE,
+               yaxis = list (title = "Prozent"),
+               xaxis = list (title ="",side = "top", tickfont = list(size = 16, color = "#004c93")))  %>%
+        hide_colorbar()  
+      
+    }
   }
   
   # Fill-In Stage
   if(type == 'Fill-In'){
-    plot <- 'Fill-In'
+    new_data <- data %>%
+      dplyr::arrange({{x}}) %>%
+      dplyr::rename('x_label' = {{x}}) %>%
+      dplyr::rename('x_label_trimmed' = paste0({{x}}, '_trimmed'))
+    
+    # plotting
+    plot <- plot_fun(new_data)
+    ## data wrangling
+    new_data <- data %>%
+      dplyr::arrange({{x}}) %>%
+      dplyr::rename('x_label' = {{x}}) %>%
+      dplyr::rename('x_label_trimmed' = paste0({{x}}, '_trimmed'))
   }
   
   return(plot)

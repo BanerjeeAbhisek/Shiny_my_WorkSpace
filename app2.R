@@ -591,17 +591,17 @@ server <- function(input, output, session) {
   table_dropdown_sinput_tab = reactive({
     
     if (!all(is.na( antwortanalyse_data_dropdown()$var_value))){
-      
-      antwortanalyse_data_dropdown() %>% 
-        ungroup() %>%
-        dplyr::rename('%' = percent) %>%
-        dplyr::rename("Result (in%)" = points_individual) %>%
-        dplyr::rename("n" = n_i) %>%
-        dplyr::select(-c(colour,var_value_trimmed)) %>%
-        dplyr::mutate(var_value = unlist(var_value)) %>%
-        dplyr::select(master_id, var_value, `Result (in%)`, n, `%`, N) %>%
-        dplyr::filter(!is.na(var_value)) %>%
-        dplyr::arrange(master_id,var_value,`Result (in%)`)
+    
+    antwortanalyse_data_dropdown() %>% 
+      ungroup() %>%
+      dplyr::rename('%' = percent) %>%
+      dplyr::rename("Result (in%)" = points_individual) %>%
+      dplyr::rename("n" = n_i) %>%
+      dplyr::select(-c(colour,var_value_trimmed)) %>%
+      dplyr::mutate(var_value = unlist(var_value)) %>%
+      dplyr::select(master_id, var_value, `Result (in%)`, n, `%`, N) %>%
+      dplyr::filter(!is.na(var_value)) %>%
+      dplyr::arrange(master_id,var_value,`Result (in%)`)
     } else {
       
       antwortanalyse_data_dropdown() %>% 
@@ -614,7 +614,7 @@ server <- function(input, output, session) {
         dplyr::arrange(master_id,`Result (in%)`)
       
     }
-    
+      
   })
   
   # Present the table for the STUDENT'S INPUT section for Dropdown Type
